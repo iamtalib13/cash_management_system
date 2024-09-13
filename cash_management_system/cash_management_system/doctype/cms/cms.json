@@ -1,0 +1,360 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "format:{transaction_category}/{branch}/{DD}{MM}{YY}/{####}",
+ "creation": "2024-08-24 16:00:26.525575",
+ "default_view": "List",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "approval_tracker_section",
+  "approval_tracker",
+  "transaction_details_section",
+  "transaction_category",
+  "select_branch",
+  "amount",
+  "column_break_836lq",
+  "date_of_request",
+  "requested_branch",
+  "column_break_wsdrj",
+  "date_of_transaction",
+  "transaction_type",
+  "employee_details_section",
+  "employee",
+  "employee_html",
+  "section_break_7tryz",
+  "column_break_g6f8i",
+  "bank_name",
+  "column_break_o0npe",
+  "ifsc_code",
+  "column_break_53ajj",
+  "account_number",
+  "column_break_vntvx",
+  "cheque_number",
+  "custodian_details_section",
+  "custodian_1",
+  "custodian_1_html",
+  "branch_distance_km",
+  "requested_movement_changes",
+  "column_break_t8fqu",
+  "custodian_2",
+  "custodian_2_html",
+  "approvable_movement_changes",
+  "branch_details_section",
+  "branch",
+  "approval_tab",
+  "status",
+  "level_1_section",
+  "stage_1_emp_user",
+  "column_break_mf3lp",
+  "stage_1_emp_status",
+  "level_2_section",
+  "stage_2_emp_user",
+  "column_break_5sylg",
+  "stage_2_emp_status"
+ ],
+ "fields": [
+  {
+   "fieldname": "employee",
+   "fieldtype": "Link",
+   "hidden": 1,
+   "label": "Employee",
+   "options": "Employee"
+  },
+  {
+   "fieldname": "employee_html",
+   "fieldtype": "HTML"
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "employee_details_section",
+   "fieldtype": "Section Break",
+   "label": "Employee Details"
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "branch_details_section",
+   "fieldtype": "Section Break",
+   "hidden": 1,
+   "label": "Branch Details"
+  },
+  {
+   "fieldname": "branch",
+   "fieldtype": "Link",
+   "label": "Branch",
+   "options": "Branch",
+   "reqd": 1
+  },
+  {
+   "fieldname": "transaction_details_section",
+   "fieldtype": "Section Break",
+   "label": "Transaction Details"
+  },
+  {
+   "fieldname": "column_break_836lq",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "date_of_request",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "label": "\ud83d\uddd3 Date of Request",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_break_wsdrj",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "date_of_transaction",
+   "fieldtype": "Date",
+   "label": "\ud83d\uddd3 Date of Transaction",
+   "reqd": 1
+  },
+  {
+   "fieldname": "section_break_7tryz",
+   "fieldtype": "Section Break",
+   "label": "Bank Details"
+  },
+  {
+   "depends_on": "eval:(doc.transaction_category != \"CIT\" && doc.transaction_type != \"CASH\")||(doc.transaction_category == \"CIT\" && doc.transaction_type == \"ACCOUNT TRANSFER\")",
+   "fieldname": "bank_name",
+   "fieldtype": "Link",
+   "label": "\ud83c\udfe6 Bank Name ",
+   "mandatory_depends_on": "eval:(doc.transaction_category != \"CIT\" && doc.transaction_type != \"CASH\")||(doc.transaction_category == \"CIT\" && doc.transaction_type == \"ACCOUNT TRANSFER\")",
+   "options": "Banks"
+  },
+  {
+   "fieldname": "column_break_o0npe",
+   "fieldtype": "Column Break"
+  },
+  {
+   "depends_on": "eval:(doc.transaction_category != \"CIT\" && doc.transaction_type != \"CASH\")||(doc.transaction_category == \"CIT\" && doc.transaction_type == \"ACCOUNT TRANSFER\")",
+   "fieldname": "account_number",
+   "fieldtype": "Data",
+   "label": "\ud83d\udcb0 Account Number",
+   "mandatory_depends_on": "eval:(doc.transaction_category != \"CIT\" && doc.transaction_type != \"CASH\")||(doc.transaction_category == \"CIT\" && doc.transaction_type == \"ACCOUNT TRANSFER\")"
+  },
+  {
+   "fieldname": "column_break_g6f8i",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "amount",
+   "fieldtype": "Currency",
+   "label": "\u20b9 Amount ",
+   "options": "Currency",
+   "precision": "2",
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_break_53ajj",
+   "fieldtype": "Column Break"
+  },
+  {
+   "depends_on": "eval:(doc.transaction_category != \"CIT\" && doc.transaction_type != \"CASH\")||(doc.transaction_category == \"CIT\" && doc.transaction_type == \"ACCOUNT TRANSFER\")",
+   "fieldname": "cheque_number",
+   "fieldtype": "Data",
+   "label": "\ud83d\udcb0 Cheque Number"
+  },
+  {
+   "depends_on": "eval:(doc.transaction_category != \"CIT\" && doc.transaction_type != \"CASH\")||(doc.transaction_category == \"CIT\" && doc.transaction_type == \"ACCOUNT TRANSFER\")",
+   "fieldname": "ifsc_code",
+   "fieldtype": "Data",
+   "label": "\ud83d\udcb0 IFSC Code",
+   "mandatory_depends_on": "eval:(doc.transaction_category != \"CIT\" && doc.transaction_type != \"CASH\")||(doc.transaction_category == \"CIT\" && doc.transaction_type == \"ACCOUNT TRANSFER\")"
+  },
+  {
+   "fieldname": "column_break_vntvx",
+   "fieldtype": "Column Break"
+  },
+  {
+   "depends_on": "eval:doc.select_branch == \"Other Branch\" || doc.requested_branch==\"Gondia HO\"",
+   "fieldname": "requested_branch",
+   "fieldtype": "Link",
+   "label": "\ud83c\udfe6 Branch Name",
+   "mandatory_depends_on": "eval:doc.transaction_category == \"CASH IN TRANSIT\"",
+   "options": "Branch"
+  },
+  {
+   "fieldname": "transaction_category",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "\ud83d\udcb0 Transaction Category",
+   "options": "\nDEPOSIT\nWITHDRAW\nCIT",
+   "reqd": 1
+  },
+  {
+   "depends_on": "eval:doc.requested_branch && doc.select_branch",
+   "fieldname": "transaction_type",
+   "fieldtype": "Select",
+   "label": "\ud83d\udcb0 Transaction Type",
+   "mandatory_depends_on": "eval:doc.requested_branch",
+   "options": "\nCASH\nACCOUNT TRANSFER"
+  },
+  {
+   "fieldname": "custodian_details_section",
+   "fieldtype": "Section Break",
+   "label": "Custodian Details"
+  },
+  {
+   "fieldname": "custodian_1",
+   "fieldtype": "Link",
+   "ignore_user_permissions": 1,
+   "label": "\ud83d\udc64 Custodian 1",
+   "options": "Employee",
+   "reqd": 1
+  },
+  {
+   "fieldname": "custodian_2",
+   "fieldtype": "Link",
+   "ignore_user_permissions": 1,
+   "label": "\ud83d\udc64 Custodian 2",
+   "options": "Employee",
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_break_t8fqu",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "custodian_1_html",
+   "fieldtype": "HTML"
+  },
+  {
+   "fieldname": "custodian_2_html",
+   "fieldtype": "HTML"
+  },
+  {
+   "default": "Draft",
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "label": "Status",
+   "options": "Draft\nPending\nApproved\nRejected"
+  },
+  {
+   "fieldname": "requested_movement_changes",
+   "fieldtype": "Currency",
+   "label": "\u20b9 Requested Movement Charges"
+  },
+  {
+   "fieldname": "approvable_movement_changes",
+   "fieldtype": "Currency",
+   "label": "\u20b9 Approvable Movement Charges"
+  },
+  {
+   "depends_on": "eval:doc.transaction_category == \"CIT\"",
+   "fieldname": "select_branch",
+   "fieldtype": "Select",
+   "label": "\ud83c\udfe6 Requested Branch",
+   "mandatory_depends_on": "eval:doc.transaction_category == \"CASH IN TRANSIT\"",
+   "options": "\nGondia HO\nOther Branch"
+  },
+  {
+   "fieldname": "branch_distance_km",
+   "fieldtype": "Int",
+   "label": "Branch Distance KM"
+  },
+  {
+   "fieldname": "approval_tab",
+   "fieldtype": "Tab Break",
+   "label": "Approval Tracker"
+  },
+  {
+   "fieldname": "level_1_section",
+   "fieldtype": "Section Break",
+   "label": "Level 1 : COM"
+  },
+  {
+   "fieldname": "stage_1_emp_user",
+   "fieldtype": "Data",
+   "label": "COM"
+  },
+  {
+   "fieldname": "column_break_mf3lp",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "Pending",
+   "fieldname": "stage_1_emp_status",
+   "fieldtype": "Select",
+   "label": "COM Status",
+   "options": "Pending\nApproved\nRejected"
+  },
+  {
+   "fieldname": "level_2_section",
+   "fieldtype": "Section Break",
+   "label": "Level 2 : HO"
+  },
+  {
+   "fieldname": "stage_2_emp_user",
+   "fieldtype": "Data",
+   "label": "HO"
+  },
+  {
+   "fieldname": "column_break_5sylg",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "Pending",
+   "fieldname": "stage_2_emp_status",
+   "fieldtype": "Select",
+   "label": "HO status",
+   "options": "Pending\nApproved\nRejected"
+  },
+  {
+   "fieldname": "approval_tracker_section",
+   "fieldtype": "Section Break",
+   "label": "Approval Tracker"
+  },
+  {
+   "fieldname": "approval_tracker",
+   "fieldtype": "HTML"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2024-09-11 12:39:08.593915",
+ "modified_by": "Administrator",
+ "module": "Cash Management System",
+ "name": "CMS",
+ "naming_rule": "Expression",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [
+  {
+   "color": "Blue",
+   "title": "Draft"
+  },
+  {
+   "color": "Green",
+   "title": "Approved"
+  },
+  {
+   "color": "Red",
+   "title": "Rejected"
+  },
+  {
+   "color": "Yellow",
+   "title": "Pending"
+  }
+ ],
+ "track_seen": 1
+}
