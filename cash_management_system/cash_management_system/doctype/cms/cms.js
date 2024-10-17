@@ -1,4 +1,8 @@
 frappe.ui.form.on("CMS", {
+  after_save: function (frm) {
+    // Redirect to the desired URL
+    // window.location.href = "/policies"; // Replace with your desired URL
+  },
   onload: function (frm) {
     // If the form is new, refresh the window
     if (frm.is_new()) {
@@ -6,6 +10,8 @@ frappe.ui.form.on("CMS", {
     }
   },
   refresh: function (frm) {
+    frm.trigger("home_button");
+    frm.trigger("role_validation");
     frm.trigger("role_check");
     frm.trigger("section_colors");
     $("span.sidebar-toggle-btn").hide();
@@ -25,143 +31,694 @@ frappe.ui.form.on("CMS", {
       frm.trigger("show_approval_tracker");
     }
   },
+  home_button: function (frm) {
+    frm.add_custom_button(__("Home"), function () {
+      // Add your function logic here
+      window.location.href = "/policies#cms";
+    });
+    frm.change_custom_button_type("Home", null, "#000000"); // Corrected to a valid hex color code
+  },
+
+  role_validation: function (frm) {
+    const user = frappe.session.user;
+    console.log(user);
+
+    // Fetch the user's role asynchronously
+    frappe.db
+      .get_value("CMS User", user, "status")
+      .then((result) => {
+        let role = result.message.status;
+
+        if (role == "Requester") {
+          console.log("Requester");
+          if (frm.doc.status == "Draft" && !frm.is_new()) {
+            frm.trigger("creator_submit_btn");
+          } else if (frm.doc.status !== "Draft") {
+            frm.disable_save();
+            frm.trigger("com_read_only");
+            if (frm.doc.status == "Approved") {
+              frm.trigger("requester_intro");
+            }
+          }
+
+          frm.trigger("creator_show_intro");
+          frm.set_df_property("approved_movement_charges", "read_only", 1);
+        } else if (role == "COM-Approver") {
+          frm.trigger("com_read_only");
+          console.log("COM-Approver");
+          if (frm.doc.stage_1_emp_status == "Pending") {
+            frm.trigger("com_buttons");
+          }
+          frm.trigger("com_show_intro");
+
+          frm.set_df_property("approved_movement_charges", "read_only", 1);
+        } else if (role == "HO-Approver") {
+          frm.trigger("ho_show_intro");
+          frm.trigger("ho_read_only");
+          console.log("HO-Approver");
+
+          if (frm.doc.stage_2_emp_status == "Pending") {
+            frm.trigger("ho_buttons");
+            frm.trigger("ho_intro");
+          } else if (frm.doc.stage_2_emp_status == "Approved") {
+            frm.trigger("ho_intro");
+          }
+        } else {
+          // Check if the user has the role of "System Manager"
+
+          if (frappe.user.has_role("System Manager")) {
+            console.log("Admin");
+          } else {
+            // Disable the entire form
+            frm.disable_form();
+
+            // Disable save button
+            frm.disable_save();
+          }
+        }
+      })
+      .catch((err) => {
+        console.error("Error fetching role:", err);
+      });
+  },
+
+  requester_intro: function (frm) {
+    let transaction_category = frm.doc.transaction_category.toLowerCase();
+    frm.set_intro(
+      '<span style="font-size: 15px; display: flex; align-items: center;">' +
+        '<span style="width: 20px; height: 20px; background-color: #66AB63; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-right: 5px;">' +
+        '<span style="color: white;">&#10003;</span>' + // Checkmark symbol
+        "</span>" +
+        " Your " +
+        transaction_category.toLowerCase() +
+        " request has been Approved. You may now proceed to make the " +
+        transaction_category.toLowerCase() +
+        ".</span>",
+      "green"
+    );
+  },
+  ho_read_only: function (frm) {
+    frm.set_df_property("approved_movement_charges", "read_only", 0);
+    frm.set_df_property("transaction_category", "read_only", 1);
+    frm.set_df_property("date_of_transaction", "read_only", 1);
+    frm.set_df_property("amount", "read_only", 1);
+
+    frm.set_df_property("bank_name", "read_only", 1);
+    frm.set_df_property("ifsc_code", "read_only", 1);
+    frm.set_df_property("account_number", "read_only", 1);
+    frm.set_df_property("cheque_number", "read_only", 1);
+
+    frm.set_df_property("custodian_1", "read_only", 1);
+    frm.set_df_property("custodian_2", "read_only", 1);
+
+    frm.set_df_property("branch_distance_km", "read_only", 1);
+    frm.set_df_property("requested_movement_changes", "read_only", 1);
+    frm.set_df_property("cheque_details", "read_only", 1);
+  },
+  com_read_only: function (frm) {
+    frm.set_df_property("approved_movement_charges", "read_only", 1);
+    frm.set_df_property("transaction_category", "read_only", 1);
+    frm.set_df_property("date_of_transaction", "read_only", 1);
+    frm.set_df_property("amount", "read_only", 1);
+
+    frm.set_df_property("bank_name", "read_only", 1);
+    frm.set_df_property("ifsc_code", "read_only", 1);
+    frm.set_df_property("account_number", "read_only", 1);
+    frm.set_df_property("cheque_number", "read_only", 1);
+
+    frm.set_df_property("custodian_1", "read_only", 1);
+    frm.set_df_property("custodian_2", "read_only", 1);
+
+    frm.set_df_property("branch_distance_km", "read_only", 1);
+    frm.set_df_property("requested_movement_changes", "read_only", 1);
+    frm.set_df_property("cheque_details", "read_only", 1);
+  },
+
+  creator_show_intro: function (frm) {
+    let transaction_category = frm.doc.transaction_category.toLowerCase();
+    let stage_1_emp_remark = frm.doc.stage_1_emp_remark;
+    let stage_2_emp_remark = frm.doc.stage_2_emp_remark;
+    if (
+      frm.doc.status == "Pending" &&
+      frm.doc.stage_1_emp_status == "Pending"
+    ) {
+      frm.set_intro(
+        '<span style="font-size: 15px; display: flex; align-items: center;">' +
+          '<span style="width: 20px; height: 20px; background-color: #66AB63; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-right: 5px;">' +
+          '<span style="color: white;">&#10003;</span>' + // Checkmark symbol
+          "</span>" +
+          " Your " +
+          transaction_category.toLowerCase() +
+          " request has been submitted successfully." +
+          "</span>",
+        "green"
+      );
+      frm.disable_save();
+    } else if (frm.doc.stage_1_emp_status == "Rejected") {
+      frm.set_intro(
+        '<span style="font-size: 15px; display: flex; align-items: center;">' +
+          '<span style="width: 20px; height: 20px; background-color: #FFB0B0; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-right: 5px;">' +
+          "</span>" +
+          "Your " +
+          transaction_category.toLowerCase() +
+          " request Rejected By COM." +
+          "</span>" +
+          "<br><b>Reason :- <b>" +
+          stage_1_emp_remark,
+        "red"
+      );
+    } else if (frm.doc.stage_2_emp_status == "Rejected") {
+      frm.set_intro(
+        '<span style="font-size: 15px; display: flex; align-items: center;">' +
+          '<span style="width: 20px; height: 20px; background-color: #FFB0B0; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-right: 5px;">' +
+          "</span>" +
+          "Your " +
+          transaction_category.toLowerCase() +
+          " request Rejected By Head Office." +
+          "</span>" +
+          "<br><b>Reason :- <b>" +
+          stage_2_emp_remark,
+        "red"
+      );
+    }
+  },
+
+  ho_show_intro: function (frm) {
+    let transaction_category = frm.doc.transaction_category.toLowerCase();
+    let stage_1_emp_remark = frm.doc.stage_1_emp_remark;
+    let stage_2_emp_remark = frm.doc.stage_2_emp_remark;
+
+    if (frm.doc.stage_2_emp_status == "Pending") {
+      frm.set_intro(
+        '<span style="font-size: 15px; display: flex; align-items: center;">' +
+          '<span style="width: 20px; height: 20px; background-color: #FFB0B0; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-right: 5px;">' +
+          "</span>" +
+          "Please verify this " +
+          transaction_category.toLowerCase() +
+          " request & select either '<b>Approve</b>' or '<b>Reject</b>'." +
+          "</span>",
+        "orange"
+      );
+
+      frm.disable_save();
+    } else if (frm.doc.stage_2_emp_status == "Approved") {
+      frm.set_intro(
+        '<span style="font-size: 15px; display: flex; align-items: center;">' +
+          '<span style="width: 20px; height: 20px; background-color: #66AB63; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-right: 5px;">' +
+          '<span style="color: white;">&#10003;</span>' + // Checkmark symbol
+          "</span>" +
+          " You have Approved this " +
+          transaction_category.toLowerCase() +
+          " request successfully." +
+          "</span>",
+        "green"
+      );
+    } else if (frm.doc.stage_2_emp_status == "Rejected") {
+      frm.set_intro(
+        '<span style="font-size: 15px; display: flex; align-items: center;">' +
+          '<span style="width: 20px; height: 20px; background-color: #FFB0B0; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-right: 5px;">' +
+          "</span>" +
+          "You have Rejected this " +
+          transaction_category.toLowerCase() +
+          " request." +
+          "</span>" +
+          "<br><b>Reason :- <b>" +
+          stage_2_emp_remark,
+        "red"
+      );
+    }
+  },
+  ho_buttons: function (frm) {
+    frm.add_custom_button(__("Approve"), function () {
+      if (frm.doc.stage_2_emp_status == "Pending") {
+        // Create the fields array and add conditionally based on requested_movement_changes
+        let fields = [
+          {
+            label: __("Please Give Remarks for Approval"),
+            fieldname: "stage_2_emp_remark", // Remarks field
+            fieldtype: "Small Text",
+            reqd: 1, // Make the remarks field mandatory
+          },
+        ];
+
+        // Only show movement change fields if requested_movement_changes has a value
+        if (frm.doc.requested_movement_changes) {
+          fields.unshift(
+            {
+              label: __("Requested Movement Changes"),
+              fieldname: "requested_movement_changes", // Show requested changes
+              fieldtype: "Data",
+              default: frm.doc.requested_movement_changes, // Set the value from the form
+              read_only: 1, // Make it read-only
+            },
+            {
+              label: __("Approved Movement Charges"),
+              fieldname: "approved_movement_charges", // Input for approved charges
+              fieldtype: "Data",
+              reqd: 1, // Make it mandatory
+            }
+          );
+        }
+
+        // Create a dialog for approval remarks and requested/approved movement charges
+        var approvalDialog = new frappe.ui.Dialog({
+          title: __("Approval Remarks and Movement Charges"),
+          fields: fields,
+          primary_action_label: __("Approve"),
+          primary_action: function () {
+            // Check if remarks are provided
+            const remarks =
+              approvalDialog.fields_dict.stage_2_emp_remark.get_value();
+            if (!remarks) {
+              frappe.msgprint(__("Please provide remarks for approval."));
+              return;
+            }
+
+            // If movement charges field is shown, check for approved charges
+            const approvedMovementCharges = frm.doc.requested_movement_changes
+              ? approvalDialog.fields_dict.approved_movement_charges.get_value()
+              : null;
+
+            if (
+              frm.doc.requested_movement_changes &&
+              !approvedMovementCharges
+            ) {
+              frappe.msgprint(__("Please provide approved movement charges."));
+              return;
+            }
+
+            // Set the approval status, remarks, and approved movement charges (if applicable)
+            frm.set_value("stage_2_emp_status", "Approved");
+            frm.set_value("status", "Approved");
+            frm.set_value("stage_2_emp_remark", remarks);
+
+            if (approvedMovementCharges) {
+              frm.set_value(
+                "approved_movement_charges",
+                approvedMovementCharges
+              ); // Save input to doc
+            }
+
+            approvalDialog.hide();
+
+            // Show success alert
+            frappe.show_alert(
+              {
+                message: __("Form is Successfully Approved"),
+                indicator: "green",
+              },
+              8
+            );
+
+            // Save the form
+            frm.save();
+          },
+          secondary_action_label: __("Cancel"),
+          secondary_action: function () {
+            approvalDialog.hide();
+          },
+        });
+
+        // Show the approval dialog
+        approvalDialog.show();
+      } else {
+        frappe.msgprint("Already Approved", "Message", "red");
+      }
+    });
+
+    frm.add_custom_button(__("Reject"), function () {
+      var d = new frappe.ui.Dialog({
+        title: __("Rejection Reason"),
+        fields: [
+          {
+            label: __("Please Give Reason of Rejection for this Request"),
+            fieldname: "stage_2_emp_remark", // Correct field name
+            fieldtype: "Small Text",
+            reqd: 1, // Set the rejection reason field as mandatory
+          },
+        ],
+        primary_action_label: __("Reject"),
+        primary_action: function () {
+          // Check if the rejection reason is provided
+          if (!d.fields_dict.stage_2_emp_remark.get_value()) {
+            frappe.msgprint(__("Please provide a rejection reason."));
+            return;
+          }
+
+          frm.set_value("stage_2_emp_status", "Rejected");
+          frm.set_value(
+            "stage_2_emp_remark",
+            d.fields_dict.stage_2_emp_remark.get_value() // Corrected reference
+          );
+          d.hide();
+          frm.set_value("status", "Rejected");
+          cur_frm.save();
+        },
+        secondary_action_label: __("Cancel"),
+        secondary_action: function () {
+          d.hide();
+        },
+      });
+
+      d.show();
+    });
+
+    frm.change_custom_button_type("Approve", null, "success");
+    frm.change_custom_button_type("Reject", null, "danger");
+  },
+  com_buttons: function (frm) {
+    frm.add_custom_button(__("Approve"), function () {
+      if (frm.doc.stage_1_emp_status == "Pending") {
+        // Create a dialog for approval remarks
+        var approvalDialog = new frappe.ui.Dialog({
+          title: __("Approval Remarks"),
+          fields: [
+            {
+              label: __("Please Give Remarks for Approval"),
+              fieldname: "stage_1_emp_remark", // Use the same field name as in Reject
+              fieldtype: "Small Text",
+              reqd: 1, // Set the remarks field as mandatory
+            },
+          ],
+          primary_action_label: __("Approve"),
+          primary_action: function () {
+            // Check if the remarks are provided
+            if (!approvalDialog.fields_dict.stage_1_emp_remark.get_value()) {
+              frappe.msgprint(__("Please provide remarks for approval."));
+              return;
+            }
+
+            // Set the approval status and remarks
+            frm.set_value("stage_1_emp_status", "Approved");
+            frm.set_value("stage_2_emp_status", "Pending");
+            frm.set_value(
+              "stage_1_emp_remark",
+              approvalDialog.fields_dict.stage_1_emp_remark.get_value()
+            );
+            approvalDialog.hide();
+
+            // Show success alert
+            frappe.show_alert(
+              {
+                message: __("Form is Successfully Approved"),
+                indicator: "green",
+              },
+              8
+            );
+
+            // Save the form
+            frm.save();
+          },
+          secondary_action_label: __("Cancel"),
+          secondary_action: function () {
+            approvalDialog.hide();
+          },
+        });
+
+        // Show the approval remarks dialog
+        approvalDialog.show();
+      } else {
+        frappe.msgprint("Already Approved", "Message", "red");
+      }
+    });
+
+    frm.add_custom_button(__("Reject"), function () {
+      var d = new frappe.ui.Dialog({
+        title: __("Rejection Reason"),
+        fields: [
+          {
+            label: __("Please Give Reason of Rejection for this Request"),
+            fieldname: "stage_1_emp_remark", // Same field name as in Approval
+            fieldtype: "Small Text",
+            reqd: 1, // Set the rejection reason field as mandatory
+          },
+        ],
+        primary_action_label: __("Reject"),
+        primary_action: function () {
+          // Check if the rejection reason is provided
+          if (!d.fields_dict.stage_1_emp_remark.get_value()) {
+            frappe.msgprint(__("Please provide a rejection reason."));
+            return;
+          }
+
+          frm.set_value("stage_1_emp_status", "Rejected");
+          frm.set_value(
+            "stage_1_emp_remark",
+            d.fields_dict.stage_1_emp_remark.get_value()
+          );
+          d.hide();
+          frm.set_value("status", "Rejected");
+          cur_frm.save();
+        },
+        secondary_action_label: __("Cancel"),
+        secondary_action: function () {
+          d.hide();
+        },
+      });
+
+      d.show();
+    });
+
+    frm.change_custom_button_type("Approve", null, "success");
+    frm.change_custom_button_type("Reject", null, "danger");
+  },
+
+  com_show_intro: function (frm) {
+    let transaction_category = frm.doc.transaction_category.toLowerCase();
+    let stage_1_emp_remark = frm.doc.stage_1_emp_remark;
+    if (frm.doc.stage_1_emp_status == "Pending") {
+      frm.set_intro(
+        "Please verify this request & select either '<b>Approve</b>' or '<b>Reject</b>'.",
+        "red"
+      );
+    } else if (frm.doc.stage_1_emp_status == "Approved") {
+      frm.set_intro(
+        '<span style="font-size: 15px; display: flex; align-items: center;">' +
+          '<span style="width: 20px; height: 20px; background-color: #66AB63; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-right: 5px;">' +
+          '<span style="color: white;">&#10003;</span>' + // Checkmark symbol
+          "</span>" +
+          " You have Approved this " +
+          transaction_category.toLowerCase() +
+          " request successfully." +
+          "</span>",
+        "green"
+      );
+    } else if (frm.doc.stage_1_emp_status == "Rejected") {
+      console.log("reject coms");
+
+      frm.set_intro(
+        '<span style="font-size: 15px; display: flex; align-items: center;">' +
+          '<span style="width: 20px; height: 20px; background-color: #FFB0B0; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-right: 5px;">' +
+          "</span>" +
+          "You have Rejected this " +
+          transaction_category.toLowerCase() +
+          " request." +
+          "</span>" +
+          "<br><b>Reason :- <b>" +
+          stage_1_emp_remark,
+        "red"
+      );
+    }
+  },
+  creator_submit_btn: function (frm) {
+    let transaction_category = frm.doc.transaction_category;
+
+    frm.add_custom_button(__("Submit"), function () {
+      // Determine the confirmation message based on transaction_category value
+      let confirmation_message = "";
+      if (transaction_category === "DEPOSIT") {
+        confirmation_message =
+          "Are you sure you want to submit this DEPOSIT request?";
+      } else if (transaction_category === "WITHDRAWAL") {
+        confirmation_message =
+          "Are you sure you want to submit this WITHDRAWAL request?";
+      } else if (transaction_category === "CIT") {
+        confirmation_message =
+          "Are you sure you want to submit this CIT request?";
+      } else {
+        confirmation_message = "Are you sure you want to submit the form?";
+      }
+
+      // Show the confirmation dialog with the customized message
+      frappe.confirm(
+        confirmation_message,
+        function () {
+          // If user clicks "Yes", proceed with submission
+
+          frm.set_value("status", "Pending");
+          frm.set_value("stage_1_emp_status", "Pending");
+          frappe.show_alert(
+            {
+              message: __("Form is Successfully submitted"),
+              indicator: "green",
+            },
+            8
+          );
+          frm.save();
+        },
+        function () {
+          // If user clicks "No", do nothing
+        }
+      );
+    });
+    frm.change_custom_button_type("Submit", null, "success");
+  },
   show_approval_tracker: function (frm) {
-    // Extract data from the form
-    const step_1_status = frm.doc.status === "Draft" ? "Pending" : "Approved";
-    const step_2_status =
-      frm.doc.stage_1_emp_status === "Pending" ? "Pending" : "Approved";
-    const step_3_status =
-      frm.doc.stage_2_emp_status === "Pending" ? "Pending" : "Approved";
+    // Helper function to handle blank/null statuses
+    const getStatus = (status, fallback) => {
+      return status && status !== "" ? status : fallback;
+    };
+
+    // Initialize step_1_status based on stage_1_emp_status
+    let step_1_status;
+    if (!frm.doc.stage_1_emp_status) {
+      step_1_status = "Draft"; // Set to "Draft" if stage_1_emp_status is empty
+    } else {
+      step_1_status = "Approved"; // Set to "Approved" if stage_1_emp_status is not empty
+    }
+
+    const step_2_status = getStatus(frm.doc.stage_1_emp_status, "Pending");
+    const step_3_status = getStatus(frm.doc.stage_2_emp_status, "Pending");
     const step_4_status =
-      frm.doc.status === "Approved" ? "Approved" : "Pending";
+      frm.doc.status === "Rejected"
+        ? "Disabled"
+        : getStatus(frm.doc.status, "Pending");
 
-    console.log("step 1:", step_1_status);
-    console.log("step 2:", step_2_status);
-    console.log("step 3:", step_3_status);
-    console.log("step 4:", step_4_status);
+    console.log("Step 1:", step_1_status);
+    console.log("Step 2:", step_2_status);
+    console.log("Step 3:", step_3_status);
+    console.log("Step 4:", step_4_status);
 
-    // Generate HTML
+    // Generate HTML for the approval tracker
     const html = `
-  <!DOCTYPE html>
-  <html lang="en">
-  <head>
-      <meta charset="UTF-8" />
-      <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-      <title>Progress Tracker</title>
-      <style>
-        body {
-          font-family: Arial, sans-serif;
-          margin: 0;
-          padding: 20px;
-          background-color: #f4f4f4;
-        }
-        .progress-container {
-          display: flex;
-          justify-content: space-between;
-          width: 80%;
-          margin: 0 auto;
-          position: relative;
-          padding-top: 10px;
-        }
-        .progress-step {
-          text-align: center;
-          position: relative;
-          z-index: 2;
-        }
-        .step-circle {
-          width: 25px;
-          height: 25px;
-          background-color: #e0e0e0;
-          border-radius: 50%;
-          margin: 0 auto;
-          position: relative;
-        }
-        .progress-label {
-          margin-top: 10px;
-          font-size: 14px;
-          color: #333; /* Default color */
-        }
-        .progress-step.completed .progress-label {
-          color: #1196ab; /* Color for completed steps */
-          font-weight:bold;
-        }
-        .progress-step.pending .progress-label {
-          color: #999; /* Color for pending steps */
-        }
-        .progress-bar-container {
-          position: absolute;
-          top: 20px;
-          left: 10px;
-          right: 10px;
-          height: 8px;
-          background-color: #e0e0e0;
-        }
-        .progress-bar {
-          position: absolute;
-          top: 0;
-          left: 0;
-          height: 100%;
-          background-color: #1196ab;
-          transition: width 0.3s ease;
-        }
-        .progress-step.completed .step-circle {
-          background-color: #1196ab;
-        }
-        .progress-step.completed .step-circle::after {
-        content: "";
-        background-image: url("https://m.media-amazon.com/images/G/01/x-locale/cs/ship-track/pt2/milestone_checkmark_2x._V516143779_.png");
-        background-size: 50% 50%; /* Adjusted size */
-        background-repeat: no-repeat;
-        background-position: center;
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        }
-        .progress-step.pending .step-circle::after {
-          content: "";
-          background-image: url("https://cdn-icons-png.flaticon.com/128/14090/14090215.png");
-          background-size: 100% 100%; /* Adjusted size */
-          background-repeat: no-repeat;
-          background-position: center;
-          position: absolute;
-          top: 0;
-          left: 0;
-          right: 0;
-          bottom: 0;
-        }
-      </style>
-  </head>
-  <body>
-      <div class="progress-container">
-          <div class="progress-bar-container">
-              <div class="progress-bar" id="progress-bar"></div>
+      <!DOCTYPE html>
+      <html lang="en">
+      <head>
+          <meta charset="UTF-8" />
+          <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+          <title>Progress Tracker</title>
+          <style>
+            body {
+              font-family: Arial, sans-serif;
+              margin: 0;
+              padding: 20px;
+              background-color: #f4f4f4;
+            }
+            .progress-container {
+              display: flex;
+              justify-content: space-between;
+              width: 80%;
+              margin: 0 auto;
+              position: relative;
+              padding-top: 10px;
+            }
+            .progress-step {
+              text-align: center;
+              position: relative;
+              z-index: 2;
+            }
+            .step-circle {
+              width: 25px;
+              height: 25px;
+              background-color: #e0e0e0;
+              border-radius: 50%;
+              margin: 0 auto;
+              position: relative;
+            }
+            .progress-label {
+              margin-top: 10px;
+              font-size: 14px;
+              color: #333; /* Default color */
+            }
+            .progress-step.completed .progress-label {
+              color: #1196ab; /* Color for completed steps */
+              font-weight: bold;
+            }
+            .progress-step.rejected .progress-label {
+              color: red; /* Color for rejected steps */
+            }
+            .progress-step.disabled .progress-label {
+              color: #999; /* Color for disabled steps */
+            }
+            .progress-bar-container {
+              position: absolute;
+              top: 20px;
+              left: 10px;
+              right: 10px;
+              height: 8px;
+              background-color: #e0e0e0;
+            }
+            .progress-bar {
+              position: absolute;
+              top: 0;
+              left: 0;
+              height: 100%;
+              background-color: #1196ab;
+              transition: width 0.3s ease;
+            }
+            .progress-step.completed .step-circle {
+              background-color: #1196ab;
+            }
+            .progress-step.completed .step-circle::after {
+              content: "✔"; /* Completed checkmark */
+              color: white;
+              position: absolute;
+              top: 0;
+              left: 0;
+              right: 0;
+              bottom: 0;
+              text-align: center;
+              line-height: 25px;
+            }
+            .progress-step.rejected .step-circle {
+             
+            }
+            .progress-step.rejected .step-circle::after {
+              content: "❌"; /* Rejected cross mark */
+              color: white;
+              position: absolute;
+              top: 0;
+              left: 0;
+              right: 0;
+              bottom: 0;
+              text-align: center;
+              line-height: 25px;
+            }
+            .progress-step.disabled .step-circle {
+              background-color: #e0e0e0; /* Greyed out for disabled steps */
+            }
+          </style>
+      </head>
+      <body>
+          <div class="progress-container">
+              <div class="progress-bar-container">
+                  <div class="progress-bar" id="progress-bar"></div>
+              </div>
+              <div class="progress-step" id="step-1">
+                  <div class="step-circle"></div>
+                  <div class="progress-label">Form Submission</div>
+              </div>
+              <div class="progress-step" id="step-2">
+                  <div class="step-circle"></div>
+                  <div class="progress-label">COM Approval</div>
+              </div>
+              <div class="progress-step" id="step-3">
+                  <div class="step-circle"></div>
+                  <div class="progress-label">HO Approval</div>
+              </div>
+              <div class="progress-step" id="step-4">
+                  <div class="step-circle"></div>
+                  <div class="progress-label">Request Approved</div>
+              </div>
           </div>
-          <div class="progress-step" id="step-1">
-              <div class="step-circle"></div>
-              <div class="progress-label">Form Submission</div>
-          </div>
-          <div class="progress-step" id="step-2">
-              <div class="step-circle"></div>
-              <div class="progress-label">COM Approval</div>
-          </div>
-          <div class="progress-step" id="step-3">
-              <div class="step-circle"></div>
-              <div class="progress-label">HO Approval</div>
-          </div>
-          <div class="progress-step" id="step-4">
-              <div class="step-circle"></div>
-              <div class="progress-label">Request Approved</div>
-          </div>
-      </div>
-  </body>
-  </html>
+      </body>
+      </html>
     `;
 
     // Set the HTML in the form field
     frm.set_df_property("approval_tracker", "options", html);
 
+    // Update the tracker based on the statuses
     const script = `
     function updateProgressTracker() {
       const statuses = {
@@ -172,45 +729,42 @@ frappe.ui.form.on("CMS", {
       };
       const steps = document.querySelectorAll(".progress-step");
       const progressBar = document.getElementById("progress-bar");
-
+  
       let width = 0;
-      
-      if (statuses["step-1"] === "Approved") {
-        width = 35;
-      }
-      if (statuses["step-2"] === "Approved") {
-        width = 65;
-      }
-      if (statuses["step-3"] === "Approved") {
-        width = 95;
-      }
-         if (statuses["step-4"] === "Approved") {
-        width = 100;
-      }
-      if (statuses["step-1"] === "Pending") {
-        width = 5;
-      }
-      
-      // Update the status for each step
-      let pendingFound = false;
-      steps.forEach((step, index) => {
-        if (statuses[step.id] === "Approved") {
-          step.classList.add("completed");
-          step.classList.remove("pending");
-        } else if (!pendingFound) {
-          step.classList.add("pending");
-          step.classList.remove("completed");
-          pendingFound = true; // Only the first pending step should show the pending image
-        } else {
-          step.classList.remove("pending");
-          step.classList.remove("completed");
+      let lastRejectedIndex = -1;  // Track the index of the last rejected step
+  
+      // Find the last rejected step
+      Object.keys(statuses).forEach((stepId, index) => {
+        if (statuses[stepId] === "Rejected") {
+          lastRejectedIndex = index;
         }
       });
-
-      // Set the width of the progress bar based on the calculated value
+  
+      // Update each step based on the status
+      steps.forEach((step, index) => {
+        const stepId = step.id;
+        const status = statuses[stepId];
+  
+        if (lastRejectedIndex >= 0 && index > lastRejectedIndex) {
+          // Disable all steps after the last rejected step
+          step.classList.add("disabled");
+          step.classList.remove("completed", "rejected");
+        } else if (index === lastRejectedIndex) {
+          // Show the rejected mark on the last rejected step
+          step.classList.add("rejected");
+          step.classList.remove("completed", "disabled");
+        } else if (index < lastRejectedIndex || status === "Approved") {
+          // Mark steps as completed if approved or before the rejected step
+          step.classList.add("completed");
+          step.classList.remove("rejected", "disabled");
+          width += 25;  // Update progress bar
+        }
+      });
+  
+      // Set the progress bar width based on the completion
       progressBar.style.width = \`\${width}%\`;
     }
-
+  
     // Immediately call to set the initial progress
     updateProgressTracker();
   `;
@@ -243,7 +797,6 @@ frappe.ui.form.on("CMS", {
           if (!allowedDesignations.includes(designation)) {
             console.log("Not Admin");
             frm.disable_save();
-            frm.disable_form();
           }
         } else {
           console.log("Employee record not found.");
@@ -727,11 +1280,11 @@ frappe.ui.form.on("CMS", {
         }
       }
     );
-    frm.fields_dict["approvable_movement_changes"].$input.on(
+    frm.fields_dict["approved_movement_charges"].$input.on(
       "keydown",
       function (event) {
         var key = event.key;
-        var amountField = frm.fields_dict["approvable_movement_changes"];
+        var amountField = frm.fields_dict["approved_movement_charges"];
 
         // Allow only numeric keys (0-9), Delete, and Backspace
         if (

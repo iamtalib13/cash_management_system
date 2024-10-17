@@ -1,48 +1,44 @@
 {
  "actions": [],
  "allow_rename": 1,
- "autoname": "field:branch",
- "creation": "2024-09-06 17:07:21.323615",
+ "creation": "2024-10-03 15:52:25.971939",
  "default_view": "List",
  "doctype": "DocType",
  "editable_grid": 1,
  "engine": "InnoDB",
  "field_order": [
-  "employee",
-  "branch"
+  "last_user",
+  "users"
  ],
  "fields": [
   {
-   "fieldname": "employee",
+   "fieldname": "last_user",
    "fieldtype": "Link",
-   "label": "Employee",
-   "options": "Employee"
+   "label": "Last User",
+   "options": "User"
   },
   {
-   "fieldname": "branch",
-   "fieldtype": "Link",
-   "label": "Branch",
-   "options": "Branch",
-   "unique": 1
+   "fieldname": "users",
+   "fieldtype": "Table",
+   "label": "Users",
+   "options": "HO Users"
   }
  ],
  "index_web_pages_for_search": 1,
+ "issingle": 1,
  "links": [],
- "modified": "2024-09-06 17:43:12.065283",
+ "modified": "2024-10-03 15:52:25.971939",
  "modified_by": "Administrator",
  "module": "Cash Management System",
- "name": "COM Mapping",
- "naming_rule": "By fieldname",
+ "name": "CMS Share",
  "owner": "Administrator",
  "permissions": [
   {
    "create": 1,
    "delete": 1,
    "email": 1,
-   "export": 1,
    "print": 1,
    "read": 1,
-   "report": 1,
    "role": "System Manager",
    "share": 1,
    "write": 1

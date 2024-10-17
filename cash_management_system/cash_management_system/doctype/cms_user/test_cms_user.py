@@ -5,5 +5,5 @@
 from frappe.tests.utils import FrappeTestCase
 
 
-class TestCOMMapping(FrappeTestCase):
+class TestCMSUser(FrappeTestCase):
 	pass

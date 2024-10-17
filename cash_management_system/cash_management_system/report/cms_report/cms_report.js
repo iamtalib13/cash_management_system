@@ -1,8 +1,9 @@
 // Copyright (c) 2024, Talib Sheikh and contributors
 // For license information, please see license.txt
+/* eslint-disable */
 
-frappe.ui.form.on('COM Mapping', {
-	// refresh: function(frm) {
+frappe.query_reports["CMS Report"] = {
+	"filters": [
 
-	// }
-});
+	]
+};

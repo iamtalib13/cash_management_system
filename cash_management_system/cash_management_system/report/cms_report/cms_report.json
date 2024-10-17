@@ -1,0 +1,33 @@
+{
+ "add_total_row": 0,
+ "columns": [],
+ "creation": "2024-10-14 11:03:28.706750",
+ "disable_prepared_report": 0,
+ "disabled": 0,
+ "docstatus": 0,
+ "doctype": "Report",
+ "filters": [],
+ "idx": 0,
+ "is_standard": "Yes",
+ "letter_head": "Sahayog",
+ "modified": "2024-10-14 11:03:28.706750",
+ "modified_by": "Administrator",
+ "module": "Cash Management System",
+ "name": "CMS Report",
+ "owner": "Administrator",
+ "prepared_report": 0,
+ "ref_doctype": "CMS",
+ "report_name": "CMS Report",
+ "report_type": "Script Report",
+ "roles": [
+  {
+   "role": "System Manager"
+  },
+  {
+   "role": "Employee"
+  },
+  {
+   "role": "All"
+  }
+ ]
+}

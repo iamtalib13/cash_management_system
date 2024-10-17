@@ -1,0 +1,118 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "format:{user}",
+ "creation": "2024-09-18 10:43:15.341004",
+ "default_view": "List",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "user_details_section",
+  "user",
+  "column_break_a5mn1",
+  "full_name",
+  "section_break_bgxsn",
+  "requester",
+  "com_approver",
+  "ho_approver",
+  "reports",
+  "status"
+ ],
+ "fields": [
+  {
+   "fieldname": "user_details_section",
+   "fieldtype": "Section Break",
+   "label": "User Details"
+  },
+  {
+   "fieldname": "user",
+   "fieldtype": "Link",
+   "ignore_user_permissions": 1,
+   "label": "User",
+   "options": "User"
+  },
+  {
+   "default": "0",
+   "fieldname": "requester",
+   "fieldtype": "Check",
+   "label": "Requester"
+  },
+  {
+   "default": "0",
+   "fieldname": "reports",
+   "fieldtype": "Check",
+   "label": "Reports"
+  },
+  {
+   "fetch_from": "user.full_name",
+   "fieldname": "full_name",
+   "fieldtype": "Data",
+   "label": "Full Name"
+  },
+  {
+   "fieldname": "column_break_a5mn1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "section_break_bgxsn",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "label": "status",
+   "options": "\nRequester\nCOM-Approver\nHO-Approver"
+  },
+  {
+   "default": "0",
+   "fieldname": "com_approver",
+   "fieldtype": "Check",
+   "label": "COM Approver"
+  },
+  {
+   "default": "0",
+   "fieldname": "ho_approver",
+   "fieldtype": "Check",
+   "label": "HO Approver"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2024-09-18 12:19:25.442335",
+ "modified_by": "Administrator",
+ "module": "Cash Management System",
+ "name": "CMS User",
+ "naming_rule": "Expression",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [
+  {
+   "color": "Cyan",
+   "title": "Requester"
+  },
+  {
+   "color": "Purple",
+   "title": "COM-Approver"
+  },
+  {
+   "color": "Green",
+   "title": "HO-Approver"
+  }
+ ]
+}

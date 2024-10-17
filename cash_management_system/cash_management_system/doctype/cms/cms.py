@@ -3,10 +3,15 @@
 
 import frappe
 from frappe.model.document import Document
+from frappe import _
+from frappe.utils import nowdate
 
 class CMS(Document):
 
     def validate(self):
+        if not self.stage_1_emp_status:
+           self.check_transaction_date()
+                  
         if self.custodian_1 == self.custodian_2:
             frappe.throw("Please Change Custodians, both cannot be the same!!")
         if self.select_branch == "Other Branch" and self.requested_branch == "Gondia HO":
@@ -15,16 +20,31 @@ class CMS(Document):
            frappe.throw("Amount Cannot be Zero '0'")
 
     def before_save(self):
+        if self.status == "Rejected":
+            # Clear all records in the cheque_details child table
+            self.cheque_details.clear()
+
         # Convert fields to uppercase if they exist
-        if self.ifsc_code:
-            self.ifsc_code = self.ifsc_code.upper()
-        if self.account_number:
-            self.account_number = self.account_number.upper()
-        if self.cheque_number:
-            self.cheque_number = self.cheque_number.upper()
+        # if self.ifsc_code:
+        #     self.ifsc_code = self.ifsc_code.upper()
+        # if self.account_number:
+        #     self.account_number = self.account_number.upper()
+        # if self.cheque_number:
+        #     self.cheque_number = self.cheque_number.upper()
 
         # Set the stage_1_emp_user field using the get_com method
         self.stage_1_emp_user = self.get_com(self.branch)   
+
+
+    def check_transaction_date(self):
+        # Get the current date
+        current_date = nowdate()
+
+        # Check if the transaction date is in the past
+        if self.date_of_transaction < current_date:
+            # Raise a validation error if the date is in the past
+            frappe.throw(_("Transaction date cannot be in the past. Please select the current date or a future date."))
+
 
     def get_com(self, branch):
         # Fetch the 'employee' field from the 'COM Mapping' doctype based on the branch
