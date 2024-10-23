@@ -1,8 +1,4 @@
 frappe.ui.form.on("CMS", {
-  after_save: function (frm) {
-    // Redirect to the desired URL
-    // window.location.href = "/policies"; // Replace with your desired URL
-  },
   onload: function (frm) {
     // If the form is new, refresh the window
     if (frm.is_new()) {
@@ -1329,5 +1325,17 @@ frappe.ui.form.on("CMS", {
 
   validate: function (frm) {
     //let custodian_1 = frm.doc.custodian_1;
+  },
+});
+
+frappe.ui.form.on("CMS", {
+  onload: function (frm) {
+    frm.set_query("bank_name", "cheque_details", function (doc, cdt, cdn) {
+      return {
+        filters: {
+          branch: frm.doc.branch,
+        },
+      };
+    });
   },
 });
