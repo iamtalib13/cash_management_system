@@ -6,6 +6,9 @@ frappe.ui.form.on("CMS", {
     }
   },
   refresh: function (frm) {
+    frm.trigger("transaction_category");
+    frm.trigger("transaction_type");
+
     frm.trigger("home_button");
     frm.trigger("role_validation");
     frm.trigger("role_check");
@@ -33,6 +36,18 @@ frappe.ui.form.on("CMS", {
       window.location.href = "/policies#cms";
     });
     frm.change_custom_button_type("Home", null, "#000000"); // Corrected to a valid hex color code
+  },
+
+  transaction_category: function (frm) {
+    if (frm.doc.transaction_category !== "CIT") {
+      frm.set_value("requested_branch", null);
+      frm.set_value("transaction_type", null);
+      frm.set_value("select_branch", null);
+
+      frm.refresh_field("requested_branch");
+      frm.refresh_field("transaction_type");
+      frm.refresh_field("select_branch");
+    }
   },
 
   role_validation: function (frm) {
@@ -700,7 +715,7 @@ frappe.ui.form.on("CMS", {
               </div>
               <div class="progress-step" id="step-3">
                   <div class="step-circle"></div>
-                  <div class="progress-label">HO Approval</div>
+                  <div class="progress-label">CMS/HO Approval</div>
               </div>
               <div class="progress-step" id="step-4">
                   <div class="step-circle"></div>

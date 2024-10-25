@@ -19,10 +19,22 @@ class CMS(Document):
         if self.amount == 0:
            frappe.throw("Amount Cannot be Zero '0'")
 
+        if self.transaction_type=="CASH":
+           if self.amount == 0:
+               frappe.throw("Amount Cannot be Zero")
+           
+
     def before_save(self):
         if self.status == "Rejected":
             # Clear all records in the cheque_details child table
             self.cheque_details.clear()
+        elif self.cheque_details:
+            # Sum the cheque_amount from the child table and store in self.amount
+            if self.transaction_type!="CASH":
+               total_amount = 0
+               for cheque in self.cheque_details:
+                   total_amount += cheque.cheque_amount or 0  # Ensure to handle None values safely
+               self.amount = total_amount 
 
         # Convert fields to uppercase if they exist
         # if self.ifsc_code:
@@ -57,9 +69,17 @@ class CMS(Document):
         # If com is not found, return None
         return None
 
+@frappe.whitelist()
+def generate_dynamic_pdf(name):
+    doc = frappe.get_doc("CMS", name)  # Adjust this with the relevant doctype and docname
+    html = frappe.render_template("templates/dynamic_pdf_template.html", {"doc": doc})
+    pdf = frappe.utils.pdf.get_pdf(html)
 
-
-
+    # Return the PDF content as binary data
+    frappe.local.response.filecontent = pdf
+    frappe.local.response.type = "download"
+    frappe.local.response.filename = "Document_Details.pdf"
+    return pdf
 
 @frappe.whitelist()
 def fetch_employee(employee_id):
@@ -106,3 +126,10 @@ def get_employees_by_branch(doctype, txt, searchfield, start, page_len, filters)
 @frappe.whitelist()
 def ping():
     return "pong....reply aa gya"
+
+@frappe.whitelist()
+def before_print(doc, print_format=None):
+    # Fetch additional data
+    additional_data = frappe.db.get_value('Another Doctype', {'doc_name': doc.name}, 'desired_field')
+    # Attach it to the document context
+    doc.additional_data = additional_data
