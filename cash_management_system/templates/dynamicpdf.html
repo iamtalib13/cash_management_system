@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Cash Movement Receipt</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        margin: 0;
+        padding: 0;
+        color: #333;
+      }
+
+      .header {
+        background-color: #4169e1; /* Similar blue color */
+        color: #fff;
+        padding: 10px;
+        text-align: center;
+      }
+
+      .header img {
+        max-width: 150px;
+        margin-bottom: 10px;
+      }
+
+      .header h1 {
+        font-size: 26px;
+        margin: 0;
+        text-transform: uppercase;
+      }
+
+      .section {
+        margin: 20px;
+        border: 1px solid #eaeaea;
+        padding: 15px;
+        background-color: #f9f9f9;
+      }
+
+      .section-title {
+        background-color: #d3ddef;
+        padding: 10px;
+        font-size: 18px;
+        font-weight: bold;
+        color: #4169e1;
+        margin-bottom: 10px;
+      }
+
+      .details-row {
+        display: flex;
+        justify-content: space-between;
+        padding: 5px 0;
+      }
+
+      .details-row p {
+        margin: 0;
+        font-size: 14px;
+        color: #333;
+      }
+
+      .details-row p strong {
+        font-weight: bold;
+      }
+
+      .transaction-table,
+      .approval-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 10px 0;
+      }
+
+      .transaction-table th,
+      .transaction-table td,
+      .approval-table th,
+      .approval-table td {
+        border: 1px solid #ccc;
+        padding: 8px;
+        text-align: left;
+      }
+
+      .transaction-table th {
+        background-color: #d3ddef;
+        color: #4169e1;
+      }
+
+      .footer {
+        text-align: right;
+        margin: 20px;
+        font-weight: bold;
+      }
+
+      .approval-status {
+        background-color: #d4edda;
+        color: #155724;
+        padding: 5px 10px;
+        border-radius: 5px;
+        font-size: 12px;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Header with logo and title -->
+    <div class="header">
+      <img
+        src="{{ frappe.utils.get_site_url() }}/path_to_logo.png"
+        alt="Logo"
+      />
+      <h1>Cash Movement Receipt</h1>
+      <h3>{{ doc.name }}</h3>
+    </div>
+
+    <!-- Requester Details Section -->
+    <div class="section">
+      <div class="section-title">Requester Details</div>
+      <div class="details-row">
+        <p><strong>Branch:</strong> {{ employee_details[0].branch }}</p>
+        <p><strong>Division:</strong> {{ employee_details[0].division }}</p>
+        <p><strong>Region:</strong> {{ employee_details[0].region }}</p>
+        <p><strong>Phone:</strong> {{ employee_details[0].cell_number }}</p>
+      </div>
+      <div class="details-row">
+        <p><strong>Employee ID:</strong> {{ doc.employee_id }}</p>
+        <p><strong>Employee Name:</strong> {{ doc.employee_name }}</p>
+        <p><strong>Department:</strong> {{ doc.department }}</p>
+        <p><strong>Designation:</strong> {{ doc.designation }}</p>
+      </div>
+    </div>
+
+    <!-- Custodians Details Section -->
+    <div class="section">
+      <div class="section-title">Custodians Details</div>
+      <div class="details-row">
+        <p>
+          <strong>Custodian 1 - Employee ID:</strong> {{ doc.custodian_1_id }}
+        </p>
+        <p><strong>Name:</strong> {{ doc.custodian_1_name }}</p>
+        <p><strong>Designation:</strong> {{ doc.custodian_1_designation }}</p>
+        <p><strong>Phone:</strong> {{ doc.custodian_1_phone }}</p>
+      </div>
+      <div class="details-row">
+        <p>
+          <strong>Custodian 2 - Employee ID:</strong> {{ doc.custodian_2_id }}
+        </p>
+        <p><strong>Name:</strong> {{ doc.custodian_2_name }}</p>
+        <p><strong>Designation:</strong> {{ doc.custodian_2_designation }}</p>
+        <p><strong>Phone:</strong> {{ doc.custodian_2_phone }}</p>
+      </div>
+    </div>
+
+    <!-- Transaction Details Section -->
+    <div class="section">
+      <div class="section-title">Transaction Details</div>
+      <div class="details-row">
+        <p><strong>Category:</strong> {{ doc.transaction_category }}</p>
+        <p><strong>Date:</strong> {{ doc.transaction_date }}</p>
+        <p><strong>Type:</strong> {{ doc.transaction_type }}</p>
+      </div>
+
+      <table class="transaction-table">
+        <thead>
+          <tr>
+            <th>Sr.no</th>
+            <th>Bank</th>
+            <th>IFSC</th>
+            <th>Account No.</th>
+            <th>Cheque No.</th>
+            <th>Amount</th>
+          </tr>
+        </thead>
+        <tbody>
+          <!-- Loop over transactions -->
+          {% for transaction in doc.transactions %}
+          <tr>
+            <td>{{ loop.index }}</td>
+            <td>{{ transaction.bank }}</td>
+            <td>{{ transaction.ifsc }}</td>
+            <td>{{ transaction.account_no }}</td>
+            <td>{{ transaction.cheque_no }}</td>
+            <td>{{ transaction.amount }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      <div class="footer">Total Amount: {{ doc.total_amount }}</div>
+    </div>
+
+    <!-- Approval Details Section -->
+    <div class="section">
+      <div class="section-title">Approval Details</div>
+      <table class="approval-table">
+        <thead>
+          <tr>
+            <th>COM</th>
+            <th>CMS / HO</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>{{ doc.com_approval }} - {{ doc.com_status }}</td>
+            <td>{{ doc.cms_ho_approval }} - {{ doc.cms_ho_status }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </body>
+</html>

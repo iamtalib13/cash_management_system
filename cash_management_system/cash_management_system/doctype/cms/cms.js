@@ -5,8 +5,12 @@ frappe.ui.form.on("CMS", {
       window.location.reload(); // Refreshes the page
     }
   },
+  validate: function (frm) {
+    //frm.trigger("check_mandatory_child");
+  },
+
   refresh: function (frm) {
-    frm.trigger("transaction_category");
+    //frm.trigger("transaction_category");
     frm.trigger("transaction_type");
 
     frm.trigger("home_button");
@@ -47,6 +51,15 @@ frappe.ui.form.on("CMS", {
       frm.refresh_field("requested_branch");
       frm.refresh_field("transaction_type");
       frm.refresh_field("select_branch");
+    }
+    if (frm.doc.transaction_category === "DEPOSIT") {
+      frm.fields_dict["cheque_details"].grid.grid_rows.forEach((row) => {
+        row.grid.toggle_enable("cheque_number", false);
+      });
+    } else {
+      frm.fields_dict["cheque_details"].grid.grid_rows.forEach((row) => {
+        row.grid.toggle_enable("cheque_number", true);
+      });
     }
   },
 

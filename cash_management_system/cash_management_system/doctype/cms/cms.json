@@ -273,6 +273,7 @@
    "label": "HO Remark"
   },
   {
+   "depends_on": "eval:doc.transaction_category",
    "fieldname": "cheque_details",
    "fieldtype": "Table",
    "label": "Cheque Details",
@@ -287,7 +288,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2024-10-25 10:47:13.458312",
+ "modified": "2024-10-28 16:19:02.787085",
  "modified_by": "Administrator",
  "module": "Cash Management System",
  "name": "CMS",

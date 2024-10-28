@@ -44,7 +44,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2024-10-21 15:11:37.552371",
+ "modified": "2024-10-28 17:00:33.974267",
  "modified_by": "Administrator",
  "module": "Cash Management System",
  "name": "Banks",
@@ -65,6 +65,7 @@
   }
  ],
  "quick_entry": 1,
+ "search_fields": "account_number",
  "show_title_field_in_link": 1,
  "sort_field": "modified",
  "sort_order": "DESC",

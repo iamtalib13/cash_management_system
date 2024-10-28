@@ -7,6 +7,32 @@ from frappe import _
 from frappe.utils import nowdate
 
 class CMS(Document):
+    def check_cheque_details(self):
+            all_fields_non_empty = True  # Flag to track if all fields are non-empty
+
+            # Loop through each row in the cheque_details child table
+            for row in self.cheque_details:
+                # Check if cheque_number and cheque_amount are non-empty
+                if not row.cheque_number or not row.cheque_amount:
+                    all_fields_non_empty = False  # Set flag to false if any field is empty
+
+            # Now you can take action based on the all_fields_non_empty flag
+            if not all_fields_non_empty:
+                # Raise a validation error if any field is empty
+                frappe.throw("Please ensure that 'cheque_number' and 'cheque_amount' are filled in all entries.")
+    def check_amount_details(self):
+            all_fields_non_empty = True  # Flag to track if all fields are non-empty
+
+            # Loop through each row in the cheque_details child table
+            for row in self.cheque_details:
+                # Check if cheque_number and cheque_amount are non-empty
+                if not row.cheque_amount:
+                    all_fields_non_empty = False  # Set flag to false if any field is empty
+
+            # Now you can take action based on the all_fields_non_empty flag
+            if not all_fields_non_empty:
+                # Raise a validation error if any field is empty
+                frappe.throw("Please Fill Amount.")            
 
     def validate(self):
         if not self.stage_1_emp_status:
@@ -22,7 +48,15 @@ class CMS(Document):
         if self.transaction_type=="CASH":
            if self.amount == 0:
                frappe.throw("Amount Cannot be Zero")
-           
+
+        if self.transaction_category == "CIT" and self.transaction_type == "ACCOUNT TRANSFER":
+           self.check_cheque_details()
+
+        if self.transaction_category == "WITHDRAWAL":
+           self.check_cheque_details()      
+        
+        if self.transaction_category == "DEPOSIT":
+           self.check_amount_details()         
 
     def before_save(self):
         if self.status == "Rejected":
@@ -33,7 +67,7 @@ class CMS(Document):
             if self.transaction_type!="CASH":
                total_amount = 0
                for cheque in self.cheque_details:
-                   total_amount += cheque.cheque_amount or 0  # Ensure to handle None values safely
+                   total_amount += float(cheque.cheque_amount or 0)  # Ensure to handle None values safely
                self.amount = total_amount 
 
         # Convert fields to uppercase if they exist
@@ -72,7 +106,7 @@ class CMS(Document):
 @frappe.whitelist()
 def generate_dynamic_pdf(name):
     doc = frappe.get_doc("CMS", name)  # Adjust this with the relevant doctype and docname
-    html = frappe.render_template("templates/dynamic_pdf_template.html", {"doc": doc})
+    html = frappe.render_template("cash_management_system/templates/dynamic_pdf_template.html", {"doc": doc})
     pdf = frappe.utils.pdf.get_pdf(html)
 
     # Return the PDF content as binary data
