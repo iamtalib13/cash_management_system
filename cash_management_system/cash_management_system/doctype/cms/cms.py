@@ -5,6 +5,7 @@ import frappe
 from frappe.model.document import Document
 from frappe import _
 from frappe.utils import nowdate
+from frappe.utils.pdf import get_pdf  # Import get_pdf directly
 
 class CMS(Document):
     def check_cheque_details(self):
@@ -102,18 +103,78 @@ class CMS(Document):
         
         # If com is not found, return None
         return None
-
+    
 @frappe.whitelist()
 def generate_dynamic_pdf(name):
-    doc = frappe.get_doc("CMS", name)  # Adjust this with the relevant doctype and docname
-    html = frappe.render_template("cash_management_system/templates/dynamic_pdf_template.html", {"doc": doc})
-    pdf = frappe.utils.pdf.get_pdf(html)
+    try:
+        # Fetch the document
+        doc = frappe.get_doc("CMS", name)  
 
-    # Return the PDF content as binary data
-    frappe.local.response.filecontent = pdf
-    frappe.local.response.type = "download"
-    frappe.local.response.filename = "Document_Details.pdf"
-    return pdf
+        # Initialize the context dictionary
+        context = {
+            "doc": doc,  # Include the doc object
+            "employee_details": {},
+            "custodian_1_details": {},
+            "custodian_2_details": {},
+            "stage_1_emp_user_details": {},
+            "stage_2_emp_user_details": {},
+            "stage_1_emp_id": None,  # Add to store the employee ID
+            "stage_2_emp_id": None   # Add to store the employee ID
+        }
+
+        # Fetch employee details
+        if doc.employee:
+            context["employee_details"] = fetch_employee(doc.employee)
+
+        # Fetch custodian 1 details
+        if doc.custodian_1:
+            context["custodian_1_details"] = fetch_employee(doc.custodian_1)
+
+        # Fetch custodian 2 details
+        if doc.custodian_2:
+            context["custodian_2_details"] = fetch_employee(doc.custodian_2)
+
+        # Extract employee IDs from stage_1_emp_user and stage_2_emp_user
+        stage_1_emp_id = doc.stage_1_emp_user.split('@')[0] if doc.stage_1_emp_user else None
+        stage_2_emp_id = doc.stage_2_emp_user.split('@')[0] if doc.stage_2_emp_user else None
+
+          # Store the extracted employee IDs in the context
+        context["stage_1_emp_id"] = stage_1_emp_id
+        context["stage_2_emp_id"] = stage_2_emp_id
+
+
+        # Fetch stage employee user details
+        if stage_1_emp_id:
+            context["stage_1_emp_user_details"] = fetch_employee(stage_1_emp_id)
+
+        if stage_2_emp_id:
+            context["stage_2_emp_user_details"] = fetch_employee(stage_2_emp_id)
+        
+        # Render the HTML template
+        html = frappe.render_template("cash_management_system/templates/dynamic_pdf_template.html", context)
+        
+        # Check if HTML rendering is successful
+        if not html:
+            frappe.throw("Failed to render HTML template.")
+        
+        # Generate PDF with zero margins
+        pdf_data = get_pdf(html)
+
+        # Return the PDF content as binary data
+        frappe.local.response.filecontent = pdf_data
+        frappe.local.response.type = "download"
+        frappe.local.response.filename = f"{name}_Document_Details.pdf"
+        return pdf_data
+    
+    except Exception as e:
+        # Log the error with traceback
+        frappe.log_error(frappe.get_traceback(), f"PDF Generation Error: {str(e)}")
+        
+        # Set the response status and error message
+        frappe.local.response.status_code = 500
+        frappe.local.response.message = str(e)
+        
+        return {"error": str(e)}
 
 @frappe.whitelist()
 def fetch_employee(employee_id):

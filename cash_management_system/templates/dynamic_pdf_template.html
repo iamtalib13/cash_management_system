@@ -143,19 +143,19 @@
   <table style="border-collapse: collapse;" class="emp-table">
     <tbody>
       <tr>
-        <td style="padding: 4px;"><strong>Emp ID:</strong> {{ doc.employee }}</td>
-        <td style="padding: 4px;"><strong>Emp Name:</strong> {{ employee_details[0].employee_name }}</td>
-        <td style="padding: 4px;"><strong>Designation:</strong> {{ employee_details[0].designation }}</td>
+        <td style="padding: 4px;"><strong>Emp ID : </strong> {{ doc.employee }}</td>
+        <td style="padding: 4px;"><strong>Emp Name : </strong> {{ employee_details[0].employee_name }}</td>
+        <td style="padding: 4px;"><strong>Designation : </strong> {{ employee_details[0].designation }}</td>
       </tr>
       <tr>
-        <td style="padding: 4px;"><strong>Department:</strong> {{ employee_details[0].department }}</td>
-        <td style="padding: 4px;"><strong>Branch:</strong> {{ employee_details[0].branch }}</td>
-        <td style="padding: 4px;"><strong>Division:</strong> {{ employee_details[0].division }}</td>
+        <td style="padding: 4px;"><strong>Department : </strong> {{ employee_details[0].department }}</td>
+        <td style="padding: 4px;"><strong>Branch : </strong> {{ employee_details[0].branch }}</td>
+        <td style="padding: 4px;"><strong>Division : </strong> {{ employee_details[0].division }}</td>
       </tr>
       <tr>
-        <td style="padding: 4px;"><strong>Region:</strong> {{ employee_details[0].region }}</td>
-        <td style="padding: 4px;"><strong>Zone:</strong> {{ employee_details[0].zone }}</td>
-        <td style="padding: 4px;"><strong>Phone:</strong> {{ employee_details[0].cell_number }}</td>
+        <td style="padding: 4px;"><strong>Region : </strong> {{ employee_details[0].region }}</td>
+        <td style="padding: 4px;"><strong>Zone : </strong> {{ employee_details[0].zone }}</td>
+        <td style="padding: 4px;"><strong>Phone : </strong> {{ employee_details[0].cell_number }}</td>
       </tr>
     </tbody>
   </table>
@@ -168,17 +168,17 @@
     <div class="section">
       <div class="section-title">Custodians Details</div>
       <br><b>@Custodian 1 </b><div class="details-row">
-        <p style="padding: 4px;"><strong>Employee ID:</strong> {{ doc.custodian_1 }}</p>
-        <p style="padding: 4px;"><strong>Name:</strong> {{ custodian_1_details[0].employee_name }}</p>
-        <p style="padding: 4px;"><strong>Designation:</strong> {{ custodian_1_details[0].designation }}</p>
-        <p style="padding: 4px;"><strong>Phone:</strong> {{ custodian_1_details[0].cell_number }}</p>
+        <p style="padding: 4px;"><strong>Employee ID : </strong> {{ doc.custodian_1 }}</p>
+        <p style="padding: 4px;"><strong>Name : </strong> {{ custodian_1_details[0].employee_name }}</p>
+        <p style="padding: 4px;"><strong>Designation : </strong> {{ custodian_1_details[0].designation }}</p>
+        <p style="padding: 4px;"><strong>Phone : </strong> {{ custodian_1_details[0].cell_number }}</p>
       </div>
       <hr>
       <b>@Custodian 2 </b><div class="details-row">
-        <p style="padding: 4px;"><strong>Employee ID:</strong> {{ doc.custodian_2 }}</p>
-        <p style="padding: 4px;"><strong>Name:</strong> {{ custodian_2_details[0].employee_name }}</p>
-        <p style="padding: 4px;"><strong>Designation:</strong> {{ custodian_2_details[0].designation }}</p>
-        <p style="padding: 4px;"><strong>Phone:</strong> {{ custodian_2_details[0].cell_number }}</p>
+        <p style="padding: 4px;"><strong>Employee ID : </strong> {{ doc.custodian_2 }}</p>
+        <p style="padding: 4px;"><strong>Name : </strong> {{ custodian_2_details[0].employee_name }}</p>
+        <p style="padding: 4px;"><strong>Designation : </strong> {{ custodian_2_details[0].designation }}</p>
+        <p style="padding: 4px;"><strong>Phone : </strong> {{ custodian_2_details[0].cell_number }}</p>
       </div>
     </div>
 
@@ -187,9 +187,9 @@
     <div class="section">
         <div class="section-title">Transaction Details</div>
         <div class="details-row">
-          <p><strong>Trancation Category :</strong> {{ doc.transaction_category }}</p>
-          <p><strong>Date of Trancation :</strong> {{ doc.date_of_transaction }}</p>
-          <p><strong>Trancation Type :</strong> {{ doc.transaction_type }}</p>
+          <p><strong>Trancation Category : </strong> {{ doc.transaction_category }}</p>
+          <p><strong>Date of Trancation : </strong> {{ doc.date_of_transaction }}</p>
+          <p><strong>Trancation Type : </strong> {{ doc.transaction_type }}</p>
         </div>
 
         {% if doc.transaction_type != "CASH" %}
