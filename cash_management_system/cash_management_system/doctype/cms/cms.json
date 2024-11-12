@@ -37,10 +37,12 @@
   "branch_details_section",
   "branch",
   "approval_tab",
+  "status_section",
   "status",
   "level_1_section",
   "stage_1_emp_user",
   "stage_1_emp_remark",
+  "com_email",
   "column_break_mf3lp",
   "stage_1_emp_status",
   "level_2_section",
@@ -175,10 +177,12 @@
    "fieldtype": "Column Break"
   },
   {
+   "depends_on": "eval:doc.custodian_1",
    "fieldname": "custodian_1_html",
    "fieldtype": "HTML"
   },
   {
+   "depends_on": "eval:doc.custodian_2",
    "fieldname": "custodian_2_html",
    "fieldtype": "HTML"
   },
@@ -276,7 +280,7 @@
    "depends_on": "eval:doc.transaction_category",
    "fieldname": "cheque_details",
    "fieldtype": "Table",
-   "label": "Cheque Details",
+   "label": "<b>Details</b>",
    "mandatory_depends_on": "eval:doc.transaction_type!==\"CASH\"",
    "options": "Cheque"
   },
@@ -284,11 +288,21 @@
    "fieldname": "approved_movement_charges",
    "fieldtype": "Currency",
    "label": "\u20b9 Approved Movement Charges"
+  },
+  {
+   "fieldname": "status_section",
+   "fieldtype": "Section Break",
+   "label": "Status"
+  },
+  {
+   "fieldname": "com_email",
+   "fieldtype": "Data",
+   "label": "COM Email"
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2024-10-28 16:19:02.787085",
+ "modified": "2024-11-11 10:43:26.467088",
  "modified_by": "Administrator",
  "module": "Cash Management System",
  "name": "CMS",

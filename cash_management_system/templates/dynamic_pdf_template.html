@@ -15,12 +15,16 @@
         color: #333;
         font-size: medium;
         border: 2px solid #8ABE2F;
+        border-radius: 10px;
+
       }
       .header {
         background-color: #658BFD; /* Similar blue color */
-        color: #fff;
+        /* color: #fff; */
         padding: 15px;
         text-align: left;
+        border-radius: 10px;
+        border: 1px solid #8ABE2F;
       }
 
       .header img {
@@ -46,6 +50,8 @@
         border: 1px solid #eaeaea;
         padding: 15px;
         background-color: #f9f9f9;
+        border-radius: 10px;
+
       }
 
       .section-title {
@@ -54,11 +60,14 @@
         font-size: 18px;
         font-weight: bold;
         color: #658BFD;
+        border-radius: 10px;
+
       }
       .details-row {
         display: flex;
         justify-content: space-between;
         padding: 5px 0;
+
       }
 
       .details-row p {
@@ -73,22 +82,25 @@
         font-weight: bold;
       }
 
-      .transaction-table,
-      .approval-table,.emp-table {
+      .transaction-table,.emp-table {
         width: 100%;
         border-collapse: collapse;
         margin: 10px 0;
       }
 
       .transaction-table th,
-      .transaction-table td,
-      .approval-table th,
-      .approval-table td {
+      .transaction-table td{
         border: 1px solid #ccc;
         padding: 4px;
         text-align: left;
       }
-
+      .approval-table{
+        padding: 4px;
+        text-align: center;
+        width: 60%;
+        border-collapse: collapse;
+        margin: 10px 0;
+      }
       .transaction-table th {
         background-color: #d3ddef;
         color: #658BFD;
@@ -100,10 +112,15 @@
         font-weight: bold;
         font-size: large;
       }
+      .footer-date {
+        text-align: right;
+        margin: 8px;
+        font-weight: bold;
+      }
 
       .approval-status {
         background-color: #d4edda;
-        color: #155724;
+        color:#8ABE2F;
         padding: 5px 10px;
         border-radius: 5px;
         font-size: 12px;
@@ -187,9 +204,9 @@
     <div class="section">
         <div class="section-title">Transaction Details</div>
         <div class="details-row">
-          <p><strong>Trancation Category : </strong> {{ doc.transaction_category }}</p>
-          <p><strong>Date of Trancation : </strong> {{ doc.date_of_transaction }}</p>
-          <p><strong>Trancation Type : </strong> {{ doc.transaction_type }}</p>
+          <p><strong>Transaction Category : </strong> {{ doc.transaction_category }}</p>
+          <p><strong>Date of Transaction : </strong> {{ doc.date_of_transaction }}</p>
+          <p><strong>Transaction Type : </strong> {{ doc.transaction_type }}</p>
         </div>
 
         {% if doc.transaction_type != "CASH" %}
@@ -235,21 +252,24 @@
             <thead>
               <tr>
                 <th>COM</th>
+                <th> </th>
                 <th>CMS / HO</th>
               </tr>
             </thead>
             <tbody>
               <tr>
                 <td>{{ stage_1_emp_id }} - {{ stage_1_emp_user_details[0].employee_name }}</td>
+                <td><span style='font-size:25px;'>&#8594;</span></td>
                 <td>{{ stage_2_emp_id }} - {{ stage_2_emp_user_details[0].employee_name }}</td>
               </tr>
               <tr>
                 <td><div class="status-button">{{ doc.stage_1_emp_status }}</div></td>
+                <td></td>
                 <td><div class="status-button">{{ doc.stage_2_emp_status }}</div></td>
               </tr>
             </tbody>
           </table>
-    <div class="footer">Generated on {{ frappe.utils.nowdate() }}</div>
+    <div class="footer-date">Generated on {{ frappe.utils.nowdate() }}</div>
   </div>
   </body>
 </html>

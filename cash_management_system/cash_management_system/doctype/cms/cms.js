@@ -588,6 +588,42 @@ frappe.ui.form.on("CMS", {
     frm.change_custom_button_type("Submit", null, "success");
   },
   show_approval_tracker: function (frm) {
+    let com = frm.doc.stage_1_emp_user;
+    let ho = frm.doc.stage_2_emp_user;
+    console.log("com-", com);
+    console.log("ho-", ho);
+    let fullName = "";
+    let hofullName = "";
+
+    // Fetch COM Approval User Name
+    if (com) {
+      frappe.db
+        .get_value("Employee", { user_id: com }, ["first_name", "last_name"])
+        .then((response) => {
+          if (response.message) {
+            let { first_name, last_name } = response.message;
+            fullName = `${first_name} ${last_name}`;
+            frm.fields_dict.approval_tracker.$wrapper
+              .find("#step-2 b")
+              .text(fullName);
+          }
+        });
+    }
+
+    // Fetch HO Approval User Name
+    if (ho) {
+      frappe.db
+        .get_value("Employee", { user_id: ho }, ["first_name", "last_name"])
+        .then((response) => {
+          if (response.message) {
+            let { first_name, last_name } = response.message;
+            hofullName = `${first_name} ${last_name}`;
+            frm.fields_dict.approval_tracker.$wrapper
+              .find("#step-3 b")
+              .text(hofullName);
+          }
+        });
+    }
     // Helper function to handle blank/null statuses
     const getStatus = (status, fallback) => {
       return status && status !== "" ? status : fallback;
@@ -631,7 +667,7 @@ frappe.ui.form.on("CMS", {
             .progress-container {
               display: flex;
               justify-content: space-between;
-              width: 80%;
+              width: 100%;
               margin: 0 auto;
               position: relative;
               padding-top: 10px;
@@ -667,8 +703,8 @@ frappe.ui.form.on("CMS", {
             .progress-bar-container {
               position: absolute;
               top: 20px;
-              left: 10px;
-              right: 10px;
+              left: 50px;
+              right: 50px;
               height: 8px;
               background-color: #e0e0e0;
             }
@@ -725,10 +761,12 @@ frappe.ui.form.on("CMS", {
               <div class="progress-step" id="step-2">
                   <div class="step-circle"></div>
                   <div class="progress-label">COM Approval</div>
+                   <b id="fullName">${fullName}</b>
               </div>
               <div class="progress-step" id="step-3">
                   <div class="step-circle"></div>
                   <div class="progress-label">CMS/HO Approval</div>
+                   <b id="hofullName">${hofullName}</b>
               </div>
               <div class="progress-step" id="step-4">
                   <div class="step-circle"></div>
@@ -1246,6 +1284,35 @@ frappe.ui.form.on("CMS", {
 
     // Set background color and border color for "employee_details_section"
     frm.fields_dict["employee_details_section"].wrapper.css({
+      "background-color": "#ffffff", // White background
+      "border-color": "#eaeaea", // Border color
+      "border-width": "2px", // Set the border width
+      "border-style": "solid", // Set the border style
+      "border-radius": "10px", // Set the border radius for curved corners
+      "margin-bottom": "5px", // Add bottom margin for spacing
+    });
+
+    // Set background color and border color for "employee_details_section"
+    frm.fields_dict["level_1_section"].wrapper.css({
+      "background-color": "#ffffff", // White background
+      "border-color": "#eaeaea", // Border color
+      "border-width": "2px", // Set the border width
+      "border-style": "solid", // Set the border style
+      "border-radius": "10px", // Set the border radius for curved corners
+      "margin-bottom": "5px", // Add bottom margin for spacing
+    });
+    // Set background color and border color for "employee_details_section"
+    frm.fields_dict["level_2_section"].wrapper.css({
+      "background-color": "#ffffff", // White background
+      "border-color": "#eaeaea", // Border color
+      "border-width": "2px", // Set the border width
+      "border-style": "solid", // Set the border style
+      "border-radius": "10px", // Set the border radius for curved corners
+      "margin-bottom": "5px", // Add bottom margin for spacing
+    });
+
+    // Set background color and border color for "employee_details_section"
+    frm.fields_dict["status_section"].wrapper.css({
       "background-color": "#ffffff", // White background
       "border-color": "#eaeaea", // Border color
       "border-width": "2px", // Set the border width

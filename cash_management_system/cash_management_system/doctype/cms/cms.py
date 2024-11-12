@@ -60,6 +60,8 @@ class CMS(Document):
            self.check_amount_details()         
 
     def before_save(self):
+        if self.status == "Draft":
+           self.set_com_email()  
         if self.status == "Rejected":
             # Clear all records in the cheque_details child table
             self.cheque_details.clear()
@@ -70,7 +72,16 @@ class CMS(Document):
                for cheque in self.cheque_details:
                    total_amount += float(cheque.cheque_amount or 0)  # Ensure to handle None values safely
                self.amount = total_amount 
-
+               
+    def set_com_email(self):
+        # Fetch the employee's email where user_id matches self.stage_1_emp_user
+        com_email = frappe.db.get_value('Employee', {'user_id': self.stage_1_emp_user}, 'company_email')
+        
+        # Set the email value if found
+        if com_email:
+            self.stage_1_emp_email = com_email
+        else:
+            frappe.msgprint(f"No email found for user: {self.stage_1_emp_user}")
         # Convert fields to uppercase if they exist
         # if self.ifsc_code:
         #     self.ifsc_code = self.ifsc_code.upper()
@@ -207,7 +218,8 @@ def get_employees_by_branch(doctype, txt, searchfield, start, page_len, filters)
         'Employee',
         filters={
             'branch': branch,
-            'name': ['like', f"%{txt}%"]  # Search by name
+           
+            'employee_name': ['like', f"%{txt}%"]  # Search by name
         },
         fields=['name', 'employee_name'],
         limit_start=start,
