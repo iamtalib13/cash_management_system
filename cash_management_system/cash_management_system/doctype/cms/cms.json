@@ -10,6 +10,8 @@
  "field_order": [
   "approval_tracker_section",
   "approval_tracker",
+  "attachments_section",
+  "transaction_receipt",
   "transaction_details_section",
   "transaction_category",
   "select_branch",
@@ -191,7 +193,7 @@
    "fieldname": "status",
    "fieldtype": "Select",
    "label": "Status",
-   "options": "Draft\nPending\nApproved\nRejected"
+   "options": "Draft\nPending\nApproved\nRejected\nCompleted"
   },
   {
    "fieldname": "requested_movement_changes",
@@ -298,11 +300,23 @@
    "fieldname": "com_email",
    "fieldtype": "Data",
    "label": "COM Email"
+  },
+  {
+   "depends_on": "eval:doc.status == \"Approved\"",
+   "fieldname": "attachments_section",
+   "fieldtype": "Section Break",
+   "label": "Attachments"
+  },
+  {
+   "depends_on": "eval:doc.transaction_receipt",
+   "fieldname": "transaction_receipt",
+   "fieldtype": "Attach",
+   "label": "Transaction Receipt"
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2024-11-11 10:43:26.467088",
+ "modified": "2024-11-21 13:34:12.301278",
  "modified_by": "Administrator",
  "module": "Cash Management System",
  "name": "CMS",
@@ -340,6 +354,10 @@
   {
    "color": "Yellow",
    "title": "Pending"
+  },
+  {
+   "color": "Cyan",
+   "title": "Completed"
   }
  ],
  "track_seen": 1

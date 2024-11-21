@@ -80,8 +80,10 @@ frappe.ui.form.on("CMS", {
           } else if (frm.doc.status !== "Draft") {
             frm.disable_save();
             frm.trigger("com_read_only");
+
             if (frm.doc.status == "Approved") {
               frm.trigger("requester_intro");
+              frm.trigger("upload_attach");
             }
           }
 
@@ -118,12 +120,49 @@ frappe.ui.form.on("CMS", {
 
             // Disable save button
             frm.disable_save();
+            console.log("cms user");
           }
         }
       })
       .catch((err) => {
         console.error("Error fetching role:", err);
       });
+  },
+  upload_attach: function (frm) {
+    // Add custom button
+
+    if (
+      !frm.doc.transaction_receipt &&
+      frm.doc.transaction_category !== "CIT"
+    ) {
+      frm.add_custom_button("Upload Receipt", function () {
+        // Create a dialog
+        let dialog = new frappe.ui.Dialog({
+          title: "Upload Transaction Receipt",
+          fields: [
+            {
+              fieldname: "receipt_attachment",
+              fieldtype: "Attach",
+              label: "Transaction Receipt",
+              reqd: 1,
+            },
+          ],
+          primary_action_label: "Upload",
+          primary_action: function () {
+            let values = dialog.get_values();
+            if (values) {
+              // Save the file to the field
+              frm.set_value("transaction_receipt", values.receipt_attachment);
+
+              frm.save();
+              dialog.hide();
+              frappe.msgprint(__("Transaction Receipt uploaded successfully."));
+            }
+          },
+        });
+        dialog.show();
+      });
+    }
   },
 
   requester_intro: function (frm) {
@@ -595,34 +634,75 @@ frappe.ui.form.on("CMS", {
     let fullName = "";
     let hofullName = "";
 
+    let comID = com ? com.match(/^\d+/)[0] : null;
+    let hoID = ho ? ho.match(/^\d+/)[0] : null;
+
+    console.log("com extracted number -", comID);
+    console.log("ho extracted number -", hoID);
+
     // Fetch COM Approval User Name
     if (com) {
-      frappe.db
-        .get_value("Employee", { user_id: com }, ["first_name", "last_name"])
-        .then((response) => {
+      frm.call({
+        method: "fetch_employee", // Adjust the path to your Python method
+        args: {
+          employee_id: comID,
+        },
+        callback: function (response) {
           if (response.message) {
-            let { first_name, last_name } = response.message;
-            fullName = `${first_name} ${last_name}`;
+            fullName = response.message[0].employee_name;
+            console.log("COM Full Name:", fullName);
+            // Update the HTML dynamically with the full name
+            //document.getElementById("fullName").innerText = fullName;
             frm.fields_dict.approval_tracker.$wrapper
               .find("#step-2 b")
               .text(fullName);
           }
-        });
+        },
+      });
+      // frappe.db
+      //   .get_value("Employee", { user_id: com }, ["first_name", "last_name"])
+      //   .then((response) => {
+      //     if (response.message) {
+      //       console.log("com response:", response.message);
+      //       let { first_name, last_name } = response.message;
+      //       fullName = `${first_name} ${last_name}`;
+      //       frm.fields_dict.approval_tracker.$wrapper
+      //         .find("#step-2 b")
+      //         .text(fullName);
+      //     }
+      //   });
     }
 
     // Fetch HO Approval User Name
     if (ho) {
-      frappe.db
-        .get_value("Employee", { user_id: ho }, ["first_name", "last_name"])
-        .then((response) => {
+      frm.call({
+        method: "fetch_employee", // Adjust the path to your Python method
+        args: {
+          employee_id: hoID,
+        },
+        callback: function (response) {
           if (response.message) {
-            let { first_name, last_name } = response.message;
-            hofullName = `${first_name} ${last_name}`;
+            hofullName = response.message[0].employee_name;
+            console.log("HO Full Name:", hofullName);
+            // Update the HTML dynamically with the full name
+            //document.getElementById("fullName").innerText = fullName;
             frm.fields_dict.approval_tracker.$wrapper
               .find("#step-3 b")
               .text(hofullName);
           }
-        });
+        },
+      });
+      // frappe.db
+      //   .get_value("Employee", { user_id: ho }, ["first_name", "last_name"])
+      //   .then((response) => {
+      //     if (response.message) {
+      //       let { first_name, last_name } = response.message;
+      //       hofullName = `${first_name} ${last_name}`;
+      //       frm.fields_dict.approval_tracker.$wrapper
+      //         .find("#step-3 b")
+      //         .text(hofullName);
+      //     }
+      //   });
     }
     // Helper function to handle blank/null statuses
     const getStatus = (status, fallback) => {
@@ -846,6 +926,8 @@ frappe.ui.form.on("CMS", {
           const allowedDesignations = [
             "Branch Manager",
             "Branch Operation Manager",
+            "BRANCH MANAGER",
+            "BRANCH OPERATION MANAGER",
           ];
           console.log("Designation - ", designation);
 
