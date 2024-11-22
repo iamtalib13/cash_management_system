@@ -50,7 +50,7 @@ class CMS(Document):
            if self.amount == 0:
                frappe.throw("Amount Cannot be Zero")
 
-        if self.transaction_category == "CIT" and self.transaction_type == "ACCOUNT TRANSFER":
+        if self.transaction_category == "CIT" and self.transaction_type == "ACCOUNT TRANSFER" and self.select_branch != "Other Branch":
            self.check_cheque_details()
 
         if self.transaction_category == "WITHDRAWAL":
@@ -60,8 +60,8 @@ class CMS(Document):
            self.check_amount_details()         
 
     def before_save(self):
-        if self.status == "Draft":
-           self.set_com_email()  
+        # if self.status == "Draft":
+        #    self.set_com_email()  
         if self.status == "Rejected":
             # Clear all records in the cheque_details child table
             self.cheque_details.clear()
@@ -72,16 +72,20 @@ class CMS(Document):
                for cheque in self.cheque_details:
                    total_amount += float(cheque.cheque_amount or 0)  # Ensure to handle None values safely
                self.amount = total_amount 
-               
+    
+    def before_insert(self):
+        self.set_com_email()
+                   
     def set_com_email(self):
+        self.stage_1_emp_user = self.get_com(self.branch)  
         # Fetch the employee's email where user_id matches self.stage_1_emp_user
         com_email = frappe.db.get_value('Employee', {'user_id': self.stage_1_emp_user}, 'company_email')
         
         # Set the email value if found
         if com_email:
-            self.stage_1_emp_email = com_email
+            self.com_email = com_email
         else:
-            frappe.msgprint(f"No email found for user: {self.stage_1_emp_user}")
+            frappe.msgprint(f"No email found for user: {self.com_email}")
         # Convert fields to uppercase if they exist
         # if self.ifsc_code:
         #     self.ifsc_code = self.ifsc_code.upper()
@@ -91,7 +95,7 @@ class CMS(Document):
         #     self.cheque_number = self.cheque_number.upper()
 
         # Set the stage_1_emp_user field using the get_com method
-        self.stage_1_emp_user = self.get_com(self.branch)   
+         
 
 
     def check_transaction_date(self):
