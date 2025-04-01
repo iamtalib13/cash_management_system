@@ -928,6 +928,8 @@ frappe.ui.form.on("CMS", {
             "Branch Operation Manager",
             "BRANCH MANAGER",
             "BRANCH OPERATION MANAGER",
+            "Branch Officer",
+            "BRANCH OFFICER"
           ];
           console.log("Designation - ", designation);
 
