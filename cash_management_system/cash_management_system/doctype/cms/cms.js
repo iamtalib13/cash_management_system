@@ -1208,17 +1208,17 @@ frappe.ui.form.on("CMS", {
                           )}</p>
                           <span class="mylabel">Region</span>
                           <p id="employee_region">${escapeHtml(
-                            employeeData.region || ""
+                            employeeData.custom_region || ""
                           )}</p>
                           <span class="mylabel">Division</span>
                           <p id="employee_division">${escapeHtml(
-                            employeeData.division || ""
+                            employeeData.custom_division || ""
                           )}</p><hr>
                         </div>
                         <div>
                           <span class="mylabel">District</span>
                           <p id="employee_district">${escapeHtml(
-                            employeeData.district || ""
+                            employeeData.custom_district || ""
                           )}</p>
                           <span class="mylabel">Branch</span>
                           <p id="employee_branch">${escapeHtml(
