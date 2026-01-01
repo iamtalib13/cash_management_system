@@ -10,11 +10,13 @@ frappe.ui.form.on("CMS", {
   },
 
   refresh: function (frm) {
+    console.log("refresh fired"); // Add to refresh() for debugging
+
     //frm.trigger("transaction_category");
     frm.trigger("transaction_type");
 
     frm.trigger("home_button");
-    frm.trigger("role_validation");
+    // frm.trigger("role_validation");
     frm.trigger("role_check");
     frm.trigger("section_colors");
     $("span.sidebar-toggle-btn").hide();
@@ -929,7 +931,7 @@ frappe.ui.form.on("CMS", {
             "BRANCH MANAGER",
             "BRANCH OPERATION MANAGER",
             "Branch Officer",
-            "BRANCH OFFICER"
+            "BRANCH OFFICER",
           ];
           console.log("Designation - ", designation);
 
@@ -1054,13 +1056,13 @@ frappe.ui.form.on("CMS", {
 					<span class="mylabel">Phone</span>
 					  <p id="employee_phone"> ${employeeData.cell_number || ""}</p>
 					  <span class="mylabel">Region</span>
-					  <p id="employee_region"> ${employeeData.region || ""}</p>
+					  <p id="employee_region"> ${employeeData.custom_region || ""}</p>
 					  <span class="mylabel">Division</span>
-					  <p id="employee_division"> ${employeeData.division || ""}</p>
+					  <p id="employee_division"> ${employeeData.custom_division || ""}</p>
 					</div>
 					<div>
 					<span class="mylabel">District</span>
-					  <p id="employee_district"> ${employeeData.district || ""}</p>
+					  <p id="employee_district"> ${employeeData.custom_district || ""}</p>
 					  <span class="mylabel">Branch</span>
 					  <p id="employee_branch"> ${employeeData.branch || ""}</p>
 					  <span class="mylabel">Department</span>
