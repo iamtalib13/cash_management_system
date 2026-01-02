@@ -1,9 +1,18 @@
 frappe.ui.form.on("CMS", {
   onload: function (frm) {
     // If the form is new, refresh the window
-    if (frm.is_new()) {
-      window.location.reload(); // Refreshes the page
-    }
+    // if (frm.is_new()) {
+    //   window.location.reload(); // Refreshes the page
+    // }
+    frm.set_query("bank_name", "cheque_details", function (doc, cdt, cdn) {
+      return {
+        filters: {
+          branch: frm.doc.branch,
+        },
+      };
+    });
+    frm.trigger("custodian_1_filter");
+    frm.trigger("custodian_2_filter");
   },
   validate: function (frm) {
     //frm.trigger("check_mandatory_child");
@@ -16,7 +25,7 @@ frappe.ui.form.on("CMS", {
     frm.trigger("transaction_type");
 
     frm.trigger("home_button");
-    // frm.trigger("role_validation");
+    frm.trigger("role_validation");
     frm.trigger("role_check");
     frm.trigger("section_colors");
     $("span.sidebar-toggle-btn").hide();
@@ -34,6 +43,15 @@ frappe.ui.form.on("CMS", {
       frm.trigger("custodian_2");
       frm.trigger("show_employee");
       frm.trigger("show_approval_tracker");
+    }
+    if (frappe.session.user === "Administrator") {
+      frm.enable_save();
+      frm.trigger("creator_submit_btn");
+
+      return;
+    }
+    if (frm.doc.docstatus === 0 && !frm.is_new()) {
+      frm.trigger("creator_submit_btn");
     }
   },
   home_button: function (frm) {
@@ -238,7 +256,7 @@ frappe.ui.form.on("CMS", {
           "</span>",
         "green"
       );
-      frm.disable_save();
+      // frm.disable_save();
     } else if (frm.doc.stage_1_emp_status == "Rejected") {
       frm.set_intro(
         '<span style="font-size: 15px; display: flex; align-items: center;">' +
@@ -605,26 +623,44 @@ frappe.ui.form.on("CMS", {
       }
 
       // Show the confirmation dialog with the customized message
-      frappe.confirm(
-        confirmation_message,
-        function () {
-          // If user clicks "Yes", proceed with submission
+      frappe.confirm(confirmation_message, function () {
+        // Fetch COM Approver (email)
+        frappe.db
+          .get_value("CMS User", { com_approver: 1 }, "user")
+          .then((r) => {
+            if (!r.message?.user) {
+              frappe.msgprint("COM Approver not configured");
+              return;
+            }
 
-          frm.set_value("status", "Pending");
-          frm.set_value("stage_1_emp_status", "Pending");
-          frappe.show_alert(
-            {
-              message: __("Form is Successfully submitted"),
-              indicator: "green",
-            },
-            8
-          );
-          frm.save();
-        },
-        function () {
-          // If user clicks "No", do nothing
-        }
-      );
+            const com_user = r.message.user;
+
+            // Convert email → Employee ID
+            frappe.db
+              .get_value("Employee", { user_id: com_user }, "name")
+              .then((emp) => {
+                if (!emp.message?.name) {
+                  frappe.msgprint("Employee not found for COM Approver");
+                  return;
+                }
+
+                // ✅ ONLY THESE THREE FIELDS
+                frm.set_value("stage_1_emp_user", emp.message.name); // Employee ID
+                frm.set_value("stage_1_emp_status", "Pending");
+                frm.set_value("status", "Pending");
+
+                frappe.show_alert(
+                  {
+                    message: __("Form submitted successfully"),
+                    indicator: "green",
+                  },
+                  8
+                );
+
+                frm.save();
+              });
+          });
+      });
     });
     frm.change_custom_button_type("Submit", null, "success");
   },
@@ -920,38 +956,32 @@ frappe.ui.form.on("CMS", {
   },
 
   role_check: function (frm) {
+    // HARD EXIT FOR ADMIN
+    if (frappe.session.user === "Administrator") {
+      console.log("Administrator detected – no restrictions");
+      return;
+    }
+
     frappe.db
       .get_value("Employee", { user_id: frappe.session.user }, "designation")
       .then((r) => {
-        if (r.message) {
-          const designation = r.message.designation;
-          const allowedDesignations = [
-            "Branch Manager",
-            "Branch Operation Manager",
-            "BRANCH MANAGER",
-            "BRANCH OPERATION MANAGER",
-            "Branch Officer",
-            "BRANCH OFFICER",
-          ];
-          console.log("Designation - ", designation);
+        if (!r.message) return;
 
-          // Check if user has the "System Manager" role
-          if (frappe.user.has_role("System Manager")) {
-            console.log("Admin - No restriction applied.");
-            return; // Exit the function if the user is an admin
-          }
+        const designation = r.message.designation;
+        const allowedDesignations = [
+          "Branch Manager",
+          "Branch Operation Manager",
+          "BRANCH MANAGER",
+          "BRANCH OPERATION MANAGER",
+          "Branch Officer",
+          "BRANCH OFFICER",
+        ];
 
-          // Disable form if not in allowed designations and not an admin
-          if (!allowedDesignations.includes(designation)) {
-            console.log("Not Admin");
-            frm.disable_save();
-          }
-        } else {
-          console.log("Employee record not found.");
+        if (!allowedDesignations.includes(designation)) {
+          frm.disable_save();
         }
       });
   },
-
   select_branch: function (frm) {
     if (!frm.doc.select_branch) {
       frm.set_df_property("requested_branch", "hidden", 1); // Hide requested_branch when select_branch is empty
@@ -1122,10 +1152,10 @@ frappe.ui.form.on("CMS", {
       },
     });
   },
-  onload: function (frm) {
-    frm.trigger("custodian_1_filter");
-    frm.trigger("custodian_2_filter");
-  },
+  // onload: function (frm) {
+  //   frm.trigger("custodian_1_filter");
+  //   frm.trigger("custodian_2_filter");
+  // },
   custodian_1_filter: function (frm) {
     frm.set_query("custodian_1", function () {
       return {
@@ -1504,19 +1534,19 @@ frappe.ui.form.on("CMS", {
     );
   },
 
-  validate: function (frm) {
-    //let custodian_1 = frm.doc.custodian_1;
-  },
+  // validate: function (frm) {
+  //   //let custodian_1 = frm.doc.custodian_1;
+  // },
 });
 
-frappe.ui.form.on("CMS", {
-  onload: function (frm) {
-    frm.set_query("bank_name", "cheque_details", function (doc, cdt, cdn) {
-      return {
-        filters: {
-          branch: frm.doc.branch,
-        },
-      };
-    });
-  },
-});
+// frappe.ui.form.on("CMS", {
+//   onload: function (frm) {
+//     frm.set_query("bank_name", "cheque_details", function (doc, cdt, cdn) {
+//       return {
+//         filters: {
+//           branch: frm.doc.branch,
+//         },
+//       };
+//     });
+//   },
+// });
