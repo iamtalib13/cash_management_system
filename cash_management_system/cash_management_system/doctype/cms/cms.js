@@ -24,7 +24,7 @@ frappe.ui.form.on("CMS", {
     //frm.trigger("transaction_category");
     frm.trigger("transaction_type");
 
-    frm.trigger("home_button");
+    // frm.trigger("home_button");
     frm.trigger("role_validation");
     frm.trigger("role_check");
     frm.trigger("section_colors");
@@ -50,17 +50,17 @@ frappe.ui.form.on("CMS", {
 
       return;
     }
-    if (frm.doc.docstatus === 0 && !frm.is_new()) {
-      frm.trigger("creator_submit_btn");
-    }
+    // if (frm.doc.docstatus === 0 && !frm.is_new()) {
+    //   frm.trigger("creator_submit_btn");
+    // }
   },
-  home_button: function (frm) {
-    frm.add_custom_button(__("Home"), function () {
-      // Add your function logic here
-      window.location.href = "/policies#cms";
-    });
-    frm.change_custom_button_type("Home", null, "#000000"); // Corrected to a valid hex color code
-  },
+  // home_button: function (frm) {
+  //   frm.add_custom_button(__("Home"), function () {
+  //     // Add your function logic here
+  //     window.location.href = "/policies#cms";
+  //   });
+  //   frm.change_custom_button_type("Home", null, "#000000"); // Corrected to a valid hex color code
+  // },
 
   transaction_category: function (frm) {
     if (frm.doc.transaction_category !== "CIT") {
@@ -85,67 +85,100 @@ frappe.ui.form.on("CMS", {
 
   role_validation: function (frm) {
     const user = frappe.session.user;
-    console.log(user);
 
-    // Fetch the user's role asynchronously
+    // --- Admin hard exit ---
+    if (user === "Administrator") {
+      frm._cms_role = "Administrator";
+      frm.enable_save();
+      frm.trigger("creator_submit_btn");
+      return;
+    }
+
     frappe.db
-      .get_value("CMS User", user, "status")
-      .then((result) => {
-        let role = result.message.status;
+      .get_value("CMS User", user, ["requester", "com_approver", "ho_approver"])
+      .then((res) => {
+        if (!res.message) return;
 
-        if (role == "Requester") {
-          console.log("Requester");
-          if (frm.doc.status == "Draft" && !frm.is_new()) {
+        const { requester, com_approver, ho_approver } = res.message;
+
+        // --------------------------------------------------
+        // RESOLVE ROLE
+        // --------------------------------------------------
+        let role = null;
+
+        if (com_approver) role = "COM-Approver";
+        else if (ho_approver) role = "HO-Approver";
+        else if (requester) role = "Requester";
+
+        frm._cms_role = role;
+        console.log("CMS ROLE RESOLVED:", role);
+
+        // --------------------------------------------------
+        // REQUESTER
+        // --------------------------------------------------
+        if (role === "Requester") {
+          // ✅ Show Submit ONLY when status is Draft
+          if (frm.doc.status === "Draft") {
             frm.trigger("creator_submit_btn");
-          } else if (frm.doc.status !== "Draft") {
+          } else {
+            // ❌ Hide Submit in all other states
+            frm.remove_custom_button("Submit");
             frm.disable_save();
-            frm.trigger("com_read_only");
+          }
 
-            if (frm.doc.status == "Approved") {
-              frm.trigger("requester_intro");
-              frm.trigger("upload_attach");
-            }
+          if (frm.doc.status === "Approved") {
+            frm.trigger("requester_intro");
+            frm.trigger("upload_attach");
           }
 
           frm.trigger("creator_show_intro");
           frm.set_df_property("approved_movement_charges", "read_only", 1);
-        } else if (role == "COM-Approver") {
+        }
+
+        // --------------------------------------------------
+        // COM APPROVER ✅
+        // --------------------------------------------------
+        else if (role === "COM-Approver") {
+          frm.disable_save(); // only save, NOT form
           frm.trigger("com_read_only");
-          console.log("COM-Approver");
-          if (frm.doc.stage_1_emp_status == "Pending") {
-            frm.trigger("com_buttons");
-          }
           frm.trigger("com_show_intro");
 
-          frm.set_df_property("approved_movement_charges", "read_only", 1);
-        } else if (role == "HO-Approver") {
-          frm.trigger("ho_show_intro");
-          frm.trigger("ho_read_only");
-          console.log("HO-Approver");
+          if (frm.doc.stage_1_emp_status === "Pending") {
+            frm.trigger("com_buttons"); // ✅ NOW VISIBLE
+          }
+        }
 
-          if (frm.doc.stage_2_emp_status == "Pending") {
+        // --------------------------------------------------
+        // HO APPROVER
+        // --------------------------------------------------
+        else if (role === "HO-Approver") {
+          frm.disable_save();
+          frm.trigger("ho_read_only");
+          frm.trigger("ho_show_intro");
+
+          if (frm.doc.stage_2_emp_status === "Pending") {
             frm.trigger("ho_buttons");
             frm.trigger("ho_intro");
-          } else if (frm.doc.stage_2_emp_status == "Approved") {
-            frm.trigger("ho_intro");
           }
-        } else {
-          // Check if the user has the role of "System Manager"
+        }
 
-          if (frappe.user.has_role("System Manager")) {
-            console.log("Admin");
-          } else {
-            // Disable the entire form
-            frm.disable_form();
+        // --------------------------------------------------
+        // SYSTEM MANAGER
+        // --------------------------------------------------
+        else if (frappe.user.has_role("System Manager")) {
+          frm.enable_save();
+        }
 
-            // Disable save button
-            frm.disable_save();
-            console.log("cms user");
-          }
+        // --------------------------------------------------
+        // OTHERS
+        // --------------------------------------------------
+        else {
+          // frm.disable_form();
+          frm.disable_save();
         }
       })
       .catch((err) => {
-        console.error("Error fetching role:", err);
+        console.error("CMS role fetch failed:", err);
       });
   },
   upload_attach: function (frm) {
@@ -956,9 +989,10 @@ frappe.ui.form.on("CMS", {
   },
 
   role_check: function (frm) {
-    // HARD EXIT FOR ADMIN
-    if (frappe.session.user === "Administrator") {
-      console.log("Administrator detected – no restrictions");
+    if (frappe.session.user === "Administrator") return;
+
+    // 🚫 DO NOT restrict approvers
+    if (["COM-Approver", "HO-Approver"].includes(frm._cms_role)) {
       return;
     }
 
