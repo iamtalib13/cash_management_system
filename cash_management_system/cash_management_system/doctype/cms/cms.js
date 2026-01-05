@@ -143,8 +143,11 @@ frappe.ui.form.on("CMS", {
           frm.trigger("com_read_only");
           frm.trigger("com_show_intro");
 
-          if (frm.doc.stage_1_emp_status === "Pending") {
-            frm.trigger("com_buttons"); // ✅ NOW VISIBLE
+          if (
+            frm.doc.stage_1_emp_status === "Pending" ||
+            frm.doc.stage_1_emp_status === "Rejected"
+          ) {
+            frm.trigger("com_buttons");
           }
         }
 
@@ -156,7 +159,10 @@ frappe.ui.form.on("CMS", {
           frm.trigger("ho_read_only");
           frm.trigger("ho_show_intro");
 
-          if (frm.doc.stage_2_emp_status === "Pending") {
+          if (
+            frm.doc.stage_2_emp_status === "Pending" ||
+            frm.doc.stage_2_emp_status === "Rejected"
+          ) {
             frm.trigger("ho_buttons");
             frm.trigger("ho_intro");
           }
@@ -206,6 +212,7 @@ frappe.ui.form.on("CMS", {
             if (values) {
               // Save the file to the field
               frm.set_value("transaction_receipt", values.receipt_attachment);
+              // preserve_child_tables(frm);
 
               frm.save();
               dialog.hide();
@@ -366,7 +373,10 @@ frappe.ui.form.on("CMS", {
   },
   ho_buttons: function (frm) {
     frm.add_custom_button(__("Approve"), function () {
-      if (frm.doc.stage_2_emp_status == "Pending") {
+      if (
+        frm.doc.stage_2_emp_status === "Pending" ||
+        frm.doc.stage_2_emp_status === "Rejected"
+      ) {
         // Create the fields array and add conditionally based on requested_movement_changes
         let fields = [
           {
@@ -445,6 +455,7 @@ frappe.ui.form.on("CMS", {
               },
               8
             );
+            // preserve_child_tables(frm);
 
             // Save the form
             frm.save();
@@ -488,6 +499,7 @@ frappe.ui.form.on("CMS", {
           );
           d.hide();
           frm.set_value("status", "Rejected");
+          // preserve_child_tables(frm);
           cur_frm.save();
         },
         secondary_action_label: __("Cancel"),
@@ -504,7 +516,11 @@ frappe.ui.form.on("CMS", {
   },
   com_buttons: function (frm) {
     frm.add_custom_button(__("Approve"), function () {
-      if (frm.doc.stage_1_emp_status == "Pending") {
+      if (
+        frm.doc.stage_1_emp_status === "Pending" ||
+        frm.doc.stage_1_emp_status === "Rejected" ||
+        frm.doc.stage_1_emp_status === "Approved"
+      ) {
         // Create a dialog for approval remarks
         var approvalDialog = new frappe.ui.Dialog({
           title: __("Approval Remarks"),
@@ -543,6 +559,7 @@ frappe.ui.form.on("CMS", {
             );
 
             // Save the form
+            // preserve_child_tables(frm);
             frm.save();
           },
           secondary_action_label: __("Cancel"),
@@ -584,6 +601,7 @@ frappe.ui.form.on("CMS", {
           );
           d.hide();
           frm.set_value("status", "Rejected");
+          // preserve_child_tables(frm);
           cur_frm.save();
         },
         secondary_action_label: __("Cancel"),
@@ -689,6 +707,7 @@ frappe.ui.form.on("CMS", {
                   },
                   8
                 );
+                // preserve_child_tables(frm);
 
                 frm.save();
               });
@@ -1584,3 +1603,12 @@ frappe.ui.form.on("CMS", {
 //     });
 //   },
 // });
+function preserve_child_tables(frm) {
+  const child_tables = ["cheque_details"]; // add more if needed
+
+  child_tables.forEach((field) => {
+    if (frm.doc[field] && frm.doc[field].length) {
+      frm.doc[field] = frm.doc[field].map((row) => ({ ...row }));
+    }
+  });
+}

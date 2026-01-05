@@ -60,18 +60,21 @@ class CMS(Document):
            self.check_amount_details()         
 
     def before_save(self):
-        # if self.status == "Draft":
-        #    self.set_com_email()  
-        if self.status == "Rejected":
-            # Clear all records in the cheque_details child table
-            self.cheque_details.clear()
-        elif self.cheque_details:
-            # Sum the cheque_amount from the child table and store in self.amount
-            if self.transaction_type!="CASH":
-               total_amount = 0
-               for cheque in self.cheque_details:
-                   total_amount += float(cheque.cheque_amount or 0)  # Ensure to handle None values safely
-               self.amount = total_amount 
+        # --------------------------------------------------
+        # 1. Preserve child table on Reject / Approve
+        # --------------------------------------------------
+        if not self.is_new() and self.status in ("Rejected", "Approved"):
+            old_doc = frappe.get_doc(self.doctype, self.name)
+            self.cheque_details = old_doc.cheque_details
+
+        # --------------------------------------------------
+        # 2. Recalculate amount ONLY when editable
+        # --------------------------------------------------
+        if self.transaction_type != "CASH" and self.cheque_details:
+            total_amount = 0
+            for cheque in self.cheque_details:
+                total_amount += float(cheque.cheque_amount or 0)
+            self.amount = total_amount
     
     def before_insert(self):
         self.set_com_email()
