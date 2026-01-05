@@ -137,7 +137,7 @@ class CMS(Document):
         if old.stage_1_emp_status != self.stage_1_emp_status:
             frappe.msgprint("inside com status change")
             if self.stage_1_emp_status == "Approved":
-                frappe.msgprint("inside com approved")
+                # frappe.msgprint("inside com approved")
                 send_status_email(
                     self,
                     "Approved by COM",
@@ -145,7 +145,7 @@ class CMS(Document):
                 )
 
             elif self.stage_1_emp_status == "Rejected":
-                frappe.msgprint("inside com rejected")
+                # frappe.msgprint("inside com rejected")
                 send_status_email(
                     self,
                     "Rejected by COM",
@@ -156,7 +156,7 @@ class CMS(Document):
         if old.stage_2_emp_status != self.stage_2_emp_status:
             frappe
             if self.stage_2_emp_status == "Approved":
-                frappe.msgprint("inside ho approved")
+                # frappe.msgprint("inside ho approved")
                 send_status_email(
                     self,
                     "Approved by Head Office",
@@ -164,7 +164,7 @@ class CMS(Document):
                 )
 
             elif self.stage_2_emp_status == "Rejected":
-                frappe.msgprint("inside ho rejected")
+                # frappe.msgprint("inside ho rejected")
                 send_status_email(
                     self,
                     "Rejected by Head Office",
