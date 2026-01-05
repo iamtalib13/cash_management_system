@@ -171,9 +171,11 @@ class CMS(Document):
                     self.stage_2_emp_remark,
                     
                 )
+from frappe.utils import get_url_to_form
+
 def send_status_email(doc, action, remark=None):
     # --------------------------------------------------
-    # 1. Find Employee linked to document owner
+    # 1. Get recipient from Employee.company_email
     # --------------------------------------------------
     employee_email = frappe.db.get_value(
         "Employee",
@@ -191,12 +193,18 @@ def send_status_email(doc, action, remark=None):
     recipients = [employee_email]
 
     # --------------------------------------------------
-    # 2. Email subject & body
+    # 2. Generate CMS record link
+    # --------------------------------------------------
+    record_url = get_url_to_form(doc.doctype, doc.name)
+
+    # --------------------------------------------------
+    # 3. Email subject & body
     # --------------------------------------------------
     subject = f"CMS Request {doc.name} - {action}"
 
     message = f"""
         <p>Hello,</p>
+
         <p>Your CMS request <b>{doc.name}</b> has been
         <b>{action}</b>.</p>
     """
@@ -204,15 +212,22 @@ def send_status_email(doc, action, remark=None):
     if remark:
         message += f"<p><b>Remarks:</b> {remark}</p>"
 
-    message += """
+    message += f"""
+        <p>
+            👉 <a href="{record_url}" target="_blank">
+            Click here to open the request
+            </a>
+        </p>
+
         <p>Please login to the system for more details.</p>
+
         <br>
         <p>Regards,<br>
         Cash Management System</p>
     """
 
     # --------------------------------------------------
-    # 3. Send mail
+    # 4. Send email
     # --------------------------------------------------
     frappe.sendmail(
         recipients=recipients,
