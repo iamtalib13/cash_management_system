@@ -6,6 +6,9 @@ from frappe.model.document import Document
 from frappe import _
 from frappe.utils import nowdate
 from frappe.utils.pdf import get_pdf  # Import get_pdf directly
+from frappe.utils import now_datetime
+
+
 
 class CMS(Document):
     def check_cheque_details(self):
@@ -112,6 +115,7 @@ class CMS(Document):
 
 
     def get_com(self, branch):
+    
         # Fetch the 'employee' field from the 'COM Mapping' doctype based on the branch
         com = frappe.db.get_value('COM Mapping', branch, 'employee')
         
@@ -121,7 +125,103 @@ class CMS(Document):
         
         # If com is not found, return None
         return None
-    
+    # --------------------------------------------------
+    # EMAIL TRIGGERS (SAFE & RELIABLE)
+    # --------------------------------------------------
+    def on_update(self):
+        old = self._doc_before_save
+        if not old:
+            return
+
+        # COM approval / rejection
+        if old.stage_1_emp_status != self.stage_1_emp_status:
+            frappe.msgprint("inside com status change")
+            if self.stage_1_emp_status == "Approved":
+                frappe.msgprint("inside com approved")
+                send_status_email(
+                    self,
+                    "Approved by COM",
+                    self.stage_1_emp_remark
+                )
+
+            elif self.stage_1_emp_status == "Rejected":
+                frappe.msgprint("inside com rejected")
+                send_status_email(
+                    self,
+                    "Rejected by COM",
+                    self.stage_1_emp_remark
+                )
+
+        # HO approval / rejection
+        if old.stage_2_emp_status != self.stage_2_emp_status:
+            frappe
+            if self.stage_2_emp_status == "Approved":
+                frappe.msgprint("inside ho approved")
+                send_status_email(
+                    self,
+                    "Approved by Head Office",
+                    self.stage_2_emp_remark
+                )
+
+            elif self.stage_2_emp_status == "Rejected":
+                frappe.msgprint("inside ho rejected")
+                send_status_email(
+                    self,
+                    "Rejected by Head Office",
+                    self.stage_2_emp_remark,
+                    
+                )
+def send_status_email(doc, action, remark=None):
+    # --------------------------------------------------
+    # 1. Find Employee linked to document owner
+    # --------------------------------------------------
+    employee_email = frappe.db.get_value(
+        "Employee",
+        {"user_id": doc.owner},
+        "company_email"
+    )
+
+    if not employee_email:
+        frappe.log_error(
+            f"No company_email found for user {doc.owner}",
+            "CMS Email Error"
+        )
+        return
+
+    recipients = [employee_email]
+
+    # --------------------------------------------------
+    # 2. Email subject & body
+    # --------------------------------------------------
+    subject = f"CMS Request {doc.name} - {action}"
+
+    message = f"""
+        <p>Hello,</p>
+        <p>Your CMS request <b>{doc.name}</b> has been
+        <b>{action}</b>.</p>
+    """
+
+    if remark:
+        message += f"<p><b>Remarks:</b> {remark}</p>"
+
+    message += """
+        <p>Please login to the system for more details.</p>
+        <br>
+        <p>Regards,<br>
+        Cash Management System</p>
+    """
+
+    # --------------------------------------------------
+    # 3. Send mail
+    # --------------------------------------------------
+    frappe.sendmail(
+        recipients=recipients,
+        subject=subject,
+        message=message,
+        now=True
+    )
+
+
 @frappe.whitelist()
 def generate_dynamic_pdf(name):
     try:
