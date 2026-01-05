@@ -3,74 +3,97 @@ import json
 
 @frappe.whitelist(allow_guest=True)  # This allows the method to be called from the front-end
 def get_cms_records(status=None):
+
     user = frappe.session.user
-    
-    try:
-        # Display the current user for debugging purposes
-        frappe.msgprint(f"Current user is: {user}")
-        
-        # Fetch user permissions
-        user_permission = frappe.db.get_value(
-            'CMS User',
-            user,
-            ['user', 'requester', 'ho_approver', 'com_approver', 'reports'],
-            as_dict=True  # Ensure the result is a dictionary
-        )
-        
-        if user_permission:
-            user_type = None
-            if user_permission.requester == 1:
-                user_type = "Requester"
-            elif user_permission.ho_approver == 1:
-                 user_type = "HO_Approver"
-                 return {"message": ho_records(status)}  # Return the records directly
-                    
-            elif user_permission.com_approver == 1:
-                user_type = "COM_Approver"
-                return {"message": com_records(status)}  # Return the records directly
-            
-            # Display a message based on user type
-            if user_type:
-                frappe.msgprint(f"User type is: {user_type}")
 
-            # Convert status from JSON string to Python list if needed
-            if status:
-                statuses = json.loads(status)
-            else:
-                statuses = []
+    # --------------------------------------------------
+    # 1. Extract employee id safely (TEMP FIX)
+    # --------------------------------------------------
+    emp_id = None
+    if "@" in user:
+        emp_id = user.split("@")[0]
 
-            # Define filters based on the statuses list
-            filters = {}
-            if statuses:
-                filters['status'] = ['in', statuses]
+    # DEBUG (DO NOT SKIP)
+    frappe.log_error(
+        f"user={user}, trimmed_emp_id={emp_id}",
+        "CMS VISIBILITY DEBUG"
+    )
 
-            # Apply user type specific filters
-            if user_type == "Requester":
-                filters['owner'] = user
-            elif user_type == "COM_Approver":
-                filters['stage_1_emp_user'] = user
-                #filters['stage_1_emp_status']='Pending'
-            
-            # Fetch CMS records with the given filters
-            cms_records = frappe.db.get_all(
-                'CMS',
-                filters=filters,
-                fields=['name', 'status', 'owner','branch', 'stage_1_emp_user','stage_1_emp_status', 'stage_2_emp_status', 'creation', 'modified'],
-                order_by='creation desc'
-            )
-            
-            # Return the data as JSON
-            return {"message": cms_records}
-        else:
-            raise ValueError("User permissions not found.")
-    
-    except Exception as e:
-        # Log the error and show a message
-        frappe.log_error(message=str(e), title="Error in get_cms_records")
-        frappe.msgprint(f"An error occurred while fetching records: {str(e)}")
-        return {"message": "Error occurred while fetching records."}
+    # --------------------------------------------------
+    # 2. Get CMS User role
+    # --------------------------------------------------
+    cms_user = frappe.db.get_value(
+        "CMS User",
+        user,
+        ["requester", "com_approver", "ho_approver"],
+        as_dict=True
+    )
 
-import json
+    if not cms_user:
+        return []
+
+    # --------------------------------------------------
+    # 3. Parse status
+    # --------------------------------------------------
+    statuses = []
+    if status:
+        try:
+            statuses = json.loads(status)
+        except Exception:
+            pass
+
+    filters = {}
+    if statuses:
+        filters["status"] = ["in", statuses]
+
+    # --------------------------------------------------
+    # 4. OR filters (THIS IS CRITICAL)
+    # --------------------------------------------------
+    or_filters = []
+
+    # Requester
+    if cms_user.requester == 1:
+        or_filters.append(["CMS", "owner", "=", user])
+
+    # COM Approver
+    if cms_user.com_approver == 1 and emp_id:
+        or_filters.append(["CMS", "stage_1_emp_user", "=", emp_id])
+
+    # HO Approver
+    if cms_user.ho_approver == 1 and emp_id:
+        or_filters.append(["CMS", "stage_2_emp_user", "=", emp_id])
+
+    if not or_filters:
+        return []
+
+    # --------------------------------------------------
+    # 5. Fetch records
+    # --------------------------------------------------
+    records = frappe.get_all(
+        "CMS",
+        filters=filters,
+        or_filters=or_filters,
+        fields=[
+            "name",
+            "status",
+            "branch",
+            "owner",
+            "stage_1_emp_user",
+            "stage_1_emp_status",
+            "stage_2_emp_user",
+            "stage_2_emp_status",
+            "modified"
+        ],
+        order_by="modified desc"
+    )
+
+    # DEBUG
+    frappe.log_error(
+        f"records_found={len(records)}",
+        "CMS VISIBILITY RESULT"
+    )
+
+    return records
 
 def ho_records(status):
     user = frappe.session.user  # Get the current session user

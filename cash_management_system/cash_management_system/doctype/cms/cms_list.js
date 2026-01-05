@@ -5,12 +5,12 @@ frappe.listview_settings["CMS"] = {
     $(".layout-side-section").hide();
 
     // Hide the primary buttons in the list view
-    $(".primary-action").hide();
+    // $(".primary-action").hide();
 
     // Check if the user is not a System Manager
-    if (!frappe.user.has_role("System Manager")) {
-      // Redirect to /policies if the user is not a System Manager
-      window.location.href = "/policies#cms";
-    }
+    //   if (!frappe.user.has_role("System Manager")) {
+    //     // Redirect to /policies if the user is not a System Manager
+    //     window.location.href = "/policies#cms";
+    //   }
   },
 };

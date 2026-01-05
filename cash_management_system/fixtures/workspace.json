@@ -1,0 +1,96 @@
+[
+ {
+  "charts": [],
+  "content": "[{\"id\":\"YOsd3GI8hm\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">Cash Management System</span>\",\"col\":12}},{\"id\":\"_dKmg1RwfP\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Cms\",\"col\":3}},{\"id\":\"enWWSN30-4\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"CMS Report\",\"col\":3}},{\"id\":\"1EDI4Ipm1D\",\"type\":\"spacer\",\"data\":{\"col\":12}},{\"id\":\"MlMDlqDyfN\",\"type\":\"quick_list\",\"data\":{\"quick_list_name\":\"Draft\",\"col\":4}},{\"id\":\"Vwgkjfn9qQ\",\"type\":\"quick_list\",\"data\":{\"quick_list_name\":\" Pending\",\"col\":4}},{\"id\":\"YMWDxWbnif\",\"type\":\"quick_list\",\"data\":{\"quick_list_name\":\"Approved\",\"col\":4}},{\"id\":\"i9Bon2DiiL\",\"type\":\"quick_list\",\"data\":{\"quick_list_name\":\"Rejected\",\"col\":4}}]",
+  "custom_blocks": [],
+  "docstatus": 0,
+  "doctype": "Workspace",
+  "for_user": "",
+  "hide_custom": 0,
+  "icon": "expenses",
+  "indicator_color": "green",
+  "is_hidden": 0,
+  "label": "Cash Management System",
+  "links": [],
+  "modified": "2026-01-05 15:47:29.037826",
+  "module": null,
+  "name": "Cash Management System",
+  "number_cards": [],
+  "parent_page": "",
+  "public": 1,
+  "quick_lists": [
+   {
+    "document_type": "CMS",
+    "label": "Draft",
+    "parent": "Cash Management System",
+    "parentfield": "quick_lists",
+    "parenttype": "Workspace",
+    "quick_list_filter": "[[\"CMS\",\"status\",\"=\",\"Draft\",false]]"
+   },
+   {
+    "document_type": "CMS",
+    "label": "Approved",
+    "parent": "Cash Management System",
+    "parentfield": "quick_lists",
+    "parenttype": "Workspace",
+    "quick_list_filter": "[[\"CMS\",\"status\",\"=\",\"Approved\",false]]"
+   },
+   {
+    "document_type": "CMS",
+    "label": " Pending",
+    "parent": "Cash Management System",
+    "parentfield": "quick_lists",
+    "parenttype": "Workspace",
+    "quick_list_filter": "[[\"CMS\",\"status\",\"=\",\"Pending\",false]]"
+   },
+   {
+    "document_type": "CMS",
+    "label": "Rejected",
+    "parent": "Cash Management System",
+    "parentfield": "quick_lists",
+    "parenttype": "Workspace",
+    "quick_list_filter": "[[\"CMS\",\"status\",\"=\",\"Rejected\",false]]"
+   }
+  ],
+  "restrict_to_domain": null,
+  "roles": [],
+  "sequence_id": 94.0,
+  "shortcuts": [
+   {
+    "color": "Grey",
+    "doc_view": "List",
+    "format": null,
+    "icon": null,
+    "kanban_board": null,
+    "label": "CMS Report",
+    "link_to": "Cash Movment",
+    "parent": "Cash Management System",
+    "parentfield": "shortcuts",
+    "parenttype": "Workspace",
+    "report_ref_doctype": "CMS",
+    "restrict_to_domain": null,
+    "stats_filter": null,
+    "type": "Report",
+    "url": null
+   },
+   {
+    "color": "Grey",
+    "doc_view": "List",
+    "format": null,
+    "icon": null,
+    "kanban_board": null,
+    "label": "Cms",
+    "link_to": "CMS",
+    "parent": "Cash Management System",
+    "parentfield": "shortcuts",
+    "parenttype": "Workspace",
+    "report_ref_doctype": null,
+    "restrict_to_domain": null,
+    "stats_filter": "[]",
+    "type": "DocType",
+    "url": null
+   }
+  ],
+  "title": "Cash Management System"
+ }
+]

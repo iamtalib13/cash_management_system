@@ -6,6 +6,9 @@ from frappe.model.document import Document
 from frappe import _
 from frappe.utils import nowdate
 from frappe.utils.pdf import get_pdf  # Import get_pdf directly
+from frappe.utils import now_datetime
+
+
 
 class CMS(Document):
     def check_cheque_details(self):
@@ -60,18 +63,21 @@ class CMS(Document):
            self.check_amount_details()         
 
     def before_save(self):
-        # if self.status == "Draft":
-        #    self.set_com_email()  
-        if self.status == "Rejected":
-            # Clear all records in the cheque_details child table
-            self.cheque_details.clear()
-        elif self.cheque_details:
-            # Sum the cheque_amount from the child table and store in self.amount
-            if self.transaction_type!="CASH":
-               total_amount = 0
-               for cheque in self.cheque_details:
-                   total_amount += float(cheque.cheque_amount or 0)  # Ensure to handle None values safely
-               self.amount = total_amount 
+        # --------------------------------------------------
+        # 1. Preserve child table on Reject / Approve
+        # --------------------------------------------------
+        if not self.is_new() and self.status in ("Rejected", "Approved"):
+            old_doc = frappe.get_doc(self.doctype, self.name)
+            self.cheque_details = old_doc.cheque_details
+
+        # --------------------------------------------------
+        # 2. Recalculate amount ONLY when editable
+        # --------------------------------------------------
+        if self.transaction_type != "CASH" and self.cheque_details:
+            total_amount = 0
+            for cheque in self.cheque_details:
+                total_amount += float(cheque.cheque_amount or 0)
+            self.amount = total_amount
     
     def before_insert(self):
         self.set_com_email()
@@ -109,6 +115,7 @@ class CMS(Document):
 
 
     def get_com(self, branch):
+    
         # Fetch the 'employee' field from the 'COM Mapping' doctype based on the branch
         com = frappe.db.get_value('COM Mapping', branch, 'employee')
         
@@ -118,7 +125,118 @@ class CMS(Document):
         
         # If com is not found, return None
         return None
-    
+    # --------------------------------------------------
+    # EMAIL TRIGGERS (SAFE & RELIABLE)
+    # --------------------------------------------------
+    def on_update(self):
+        old = self._doc_before_save
+        if not old:
+            return
+
+        # COM approval / rejection
+        if old.stage_1_emp_status != self.stage_1_emp_status:
+            frappe.msgprint("inside com status change")
+            if self.stage_1_emp_status == "Approved":
+                # frappe.msgprint("inside com approved")
+                send_status_email(
+                    self,
+                    "Approved by COM",
+                    self.stage_1_emp_remark
+                )
+
+            elif self.stage_1_emp_status == "Rejected":
+                # frappe.msgprint("inside com rejected")
+                send_status_email(
+                    self,
+                    "Rejected by COM",
+                    self.stage_1_emp_remark
+                )
+
+        # HO approval / rejection
+        if old.stage_2_emp_status != self.stage_2_emp_status:
+            frappe
+            if self.stage_2_emp_status == "Approved":
+                # frappe.msgprint("inside ho approved")
+                send_status_email(
+                    self,
+                    "Approved by Head Office",
+                    self.stage_2_emp_remark
+                )
+
+            elif self.stage_2_emp_status == "Rejected":
+                # frappe.msgprint("inside ho rejected")
+                send_status_email(
+                    self,
+                    "Rejected by Head Office",
+                    self.stage_2_emp_remark,
+                    
+                )
+from frappe.utils import get_url_to_form
+
+def send_status_email(doc, action, remark=None):
+    # --------------------------------------------------
+    # 1. Get recipient from Employee.company_email
+    # --------------------------------------------------
+    employee_email = frappe.db.get_value(
+        "Employee",
+        {"user_id": doc.owner},
+        "company_email"
+    )
+
+    if not employee_email:
+        frappe.log_error(
+            f"No company_email found for user {doc.owner}",
+            "CMS Email Error"
+        )
+        return
+
+    recipients = [employee_email]
+
+    # --------------------------------------------------
+    # 2. Generate CMS record link
+    # --------------------------------------------------
+    record_url = get_url_to_form(doc.doctype, doc.name)
+
+    # --------------------------------------------------
+    # 3. Email subject & body
+    # --------------------------------------------------
+    subject = f"CMS Request {doc.name} - {action}"
+
+    message = f"""
+        <p>Hello,</p>
+
+        <p>Your CMS request <b>{doc.name}</b> has been
+        <b>{action}</b>.</p>
+    """
+
+    if remark:
+        message += f"<p><b>Remarks:</b> {remark}</p>"
+
+    message += f"""
+        <p>
+            👉 <a href="{record_url}" target="_blank">
+            Click here to open the request
+            </a>
+        </p>
+
+        <p>Please login to the system for more details.</p>
+
+        <br>
+        <p>Regards,<br>
+        Cash Management System</p>
+    """
+
+    # --------------------------------------------------
+    # 4. Send email
+    # --------------------------------------------------
+    frappe.sendmail(
+        recipients=recipients,
+        subject=subject,
+        message=message,
+        now=True
+    )
+
+
 @frappe.whitelist()
 def generate_dynamic_pdf(name):
     try:
@@ -195,9 +313,9 @@ def generate_dynamic_pdf(name):
 def fetch_employee(employee_id):
     # Use parameterized query to prevent SQL injection
     sql_query = """
-        SELECT CONCAT(first_name, ' ', last_name) AS employee_name, designation, branch, region, district, zone,department, division, cell_number
+        SELECT CONCAT(first_name, ' ', last_name) AS employee_name, designation, branch, custom_region, custom_district, custom_zone,department, custom_division, cell_number
         FROM `tabEmployee`
-        WHERE employee_id=%s
+        WHERE name=%s
     """
     # Execute the query with the provided employee_id
     result = frappe.db.sql(sql_query, (employee_id,), as_dict=True)

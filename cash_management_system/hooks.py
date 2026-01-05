@@ -213,3 +213,11 @@ app_license = "MIT"
 # auth_hooks = [
 # 	"cash_management_system.auth.validate"
 # ]
+fixtures = [
+    {
+        "dt": "Workspace",
+        "filters": [
+            ["name", "=", "Cash Management System"]
+        ]
+    }
+]
