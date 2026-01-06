@@ -173,7 +173,8 @@ class CMS(Document):
                     self.stage_2_emp_remark,
                     
                 )
-from frappe.utils import get_url_to_form
+import frappe
+from frappe.utils import get_url_to_form, escape_html
 
 
 def send_status_email(doc, action, remark=None):
@@ -201,7 +202,7 @@ def send_status_email(doc, action, remark=None):
     record_url = get_url_to_form(doc.doctype, doc.name)
 
     # --------------------------------------------------
-    # 3. Resolve approval progress
+    # 3. Approval progress step (TEXT → CIRCLE)
     # --------------------------------------------------
     def step(label, status):
         color = {
@@ -211,25 +212,30 @@ def send_status_email(doc, action, remark=None):
         }.get(status, "#9ca3af")
 
         return f"""
-        <div style="flex:1;text-align:center; width:100%;">
-            <div style="
-                display: flex;
-                flex-direction: row;
-                align-items: center;
-                justify-content: space-between;
-                width:28px;height:28px;
-                border-radius:50%;
-                background:{color};
-                color:white;
-     
-                font-size:14px;
-                margin-bottom:6px;">
-                ✓
-            </div>
-            <div style="font-size:12px;color:#374151;">
+        <div style="flex:1;text-align:center;width:100%;">
+
+            <!-- Label + Status -->
+            <div style="font-size:12px;color:#374151;margin-bottom:8px;">
                 {label}<br>
                 <b>{status}</b>
             </div>
+
+            <!-- Circle BELOW -->
+            <div style="
+                margin:0 auto;
+                width:28px;
+                height:28px;
+                border-radius:50%;
+                background:{color};
+                color:white;
+                display:flex;
+                align-items:center;
+                justify-content:center;
+                font-size:14px;
+            ">
+                ✓
+            </div>
+
         </div>
         """
 
@@ -271,14 +277,10 @@ def send_status_email(doc, action, remark=None):
         <!-- Body -->
         <div style="padding:22px;color:#111827;">
 
-          <p style="font-size:15px;">
-            Hello,
-          </p>
+          <p style="font-size:15px;">Hello,</p>
 
           <p style="font-size:15px;">
-            Your CMS request
-            <b>{doc.name}</b>
-            has been
+            Your CMS request <b>{doc.name}</b> has been
             <b style="color:#0f766e;">{escape_html(action)}</b>.
           </p>
 
@@ -329,7 +331,7 @@ def send_status_email(doc, action, remark=None):
                 font-weight:bold;
                 display:inline-block;
                ">
-              👉 Open CMS Request
+              Open CMS Request
             </a>
           </div>
 
@@ -356,7 +358,7 @@ def send_status_email(doc, action, remark=None):
     """
 
     # --------------------------------------------------
-    # 6. Send
+    # 6. Send Email
     # --------------------------------------------------
     frappe.sendmail(
         recipients=recipients,
@@ -364,7 +366,7 @@ def send_status_email(doc, action, remark=None):
         message=message,
         now=True
     )
-    
+  
 @frappe.whitelist()
 def generate_dynamic_pdf(name):
     try:
