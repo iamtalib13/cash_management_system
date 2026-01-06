@@ -7,6 +7,8 @@ from frappe import _
 from frappe.utils import nowdate
 from frappe.utils.pdf import get_pdf  # Import get_pdf directly
 from frappe.utils import now_datetime
+from frappe.utils import escape_html
+
 
 
 
@@ -173,9 +175,10 @@ class CMS(Document):
                 )
 from frappe.utils import get_url_to_form
 
+
 def send_status_email(doc, action, remark=None):
     # --------------------------------------------------
-    # 1. Get recipient from Employee.company_email
+    # 1. Get recipient email from Employee.company_email
     # --------------------------------------------------
     employee_email = frappe.db.get_value(
         "Employee",
@@ -193,41 +196,167 @@ def send_status_email(doc, action, remark=None):
     recipients = [employee_email]
 
     # --------------------------------------------------
-    # 2. Generate CMS record link
+    # 2. Record URL
     # --------------------------------------------------
     record_url = get_url_to_form(doc.doctype, doc.name)
 
     # --------------------------------------------------
-    # 3. Email subject & body
+    # 3. Resolve approval progress
     # --------------------------------------------------
-    subject = f"CMS Request {doc.name} - {action}"
+    def step(label, status):
+        color = {
+            "Approved": "#16a34a",
+            "Rejected": "#dc2626",
+            "Pending": "#f59e0b"
+        }.get(status, "#9ca3af")
 
+        return f"""
+        <div style="flex:1;text-align:center; width:100%;">
+            <div style="
+                display: flex;
+                flex-direction: row;
+                align-items: center;
+                justify-content: space-between;
+                width:28px;height:28px;
+                border-radius:50%;
+                background:{color};
+                color:white;
+     
+                font-size:14px;
+                margin-bottom:6px;">
+                ✓
+            </div>
+            <div style="font-size:12px;color:#374151;">
+                {label}<br>
+                <b>{status}</b>
+            </div>
+        </div>
+        """
+
+    stage_1 = doc.stage_1_emp_status or "Pending"
+    stage_2 = doc.stage_2_emp_status or "Pending"
+    final_status = doc.status or "Pending"
+
+    # --------------------------------------------------
+    # 4. Subject
+    # --------------------------------------------------
+    subject = f"CMS Request {doc.name} – {action}"
+
+    # --------------------------------------------------
+    # 5. Email HTML
+    # --------------------------------------------------
     message = f"""
-        <p>Hello,</p>
+    <div style="font-family:Arial,Helvetica,sans-serif;background:#f3f4f6;padding:20px;">
+      <div style="
+        max-width:650px;
+        margin:auto;
+        background:white;
+        border-radius:10px;
+        box-shadow:0 10px 25px rgba(0,0,0,.08);
+        overflow:hidden;
+      ">
 
-        <p>Your CMS request <b>{doc.name}</b> has been
-        <b>{action}</b>.</p>
-    """
+        <!-- Header -->
+        <div style="
+          background:#0f766e;
+          padding:18px;
+          color:white;
+          text-align:center;
+          font-size:18px;
+          font-weight:bold;
+        ">
+          Cash Management System
+        </div>
 
-    if remark:
-        message += f"<p><b>Remarks:</b> {remark}</p>"
+        <!-- Body -->
+        <div style="padding:22px;color:#111827;">
 
-    message += f"""
-        <p>
-            👉 <a href="{record_url}" target="_blank">
-            Click here to open the request
+          <p style="font-size:15px;">
+            Hello,
+          </p>
+
+          <p style="font-size:15px;">
+            Your CMS request
+            <b>{doc.name}</b>
+            has been
+            <b style="color:#0f766e;">{escape_html(action)}</b>.
+          </p>
+
+          <!-- Remarks -->
+          {f'''
+          <div style="
+            background:#fef3c7;
+            border-left:5px solid #f59e0b;
+            padding:12px;
+            margin:16px 0;
+            font-size:14px;
+          ">
+            <b>Remarks:</b><br>
+            {escape_html(remark)}
+          </div>
+          ''' if remark else ""}
+
+          <!-- Progress -->
+          <div style="margin:22px 0;">
+            <div style="font-weight:bold;margin-bottom:10px;">
+              Approval Progress
+            </div>
+
+            <div style="
+              display:flex;
+              gap:10px;
+              background:#f9fafb;
+              padding:14px;
+              border-radius:8px;
+              border:1px solid #e5e7eb;
+            ">
+              {step("COM Approval", stage_1)}
+              {step("HO Approval", stage_2)}
+              {step("Final Status", final_status)}
+            </div>
+          </div>
+
+          <!-- CTA -->
+          <div style="text-align:center;margin:28px 0;">
+            <a href="{record_url}" target="_blank"
+               style="
+                background:#0f766e;
+                color:white;
+                padding:12px 22px;
+                text-decoration:none;
+                border-radius:6px;
+                font-size:14px;
+                font-weight:bold;
+                display:inline-block;
+               ">
+              👉 Open CMS Request
             </a>
-        </p>
+          </div>
 
-        <p>Please login to the system for more details.</p>
+          <p style="font-size:13px;color:#6b7280;">
+            Please login to the system for more details.
+          </p>
 
-        <br>
-        <p>Regards,<br>
-        Cash Management System</p>
+        </div>
+
+        <!-- Footer -->
+        <div style="
+          background:#f9fafb;
+          padding:14px;
+          text-align:center;
+          font-size:12px;
+          color:#6b7280;
+        ">
+          This is an automated notification.<br>
+          Cash Management System
+        </div>
+
+      </div>
+    </div>
     """
 
     # --------------------------------------------------
-    # 4. Send email
+    # 6. Send
     # --------------------------------------------------
     frappe.sendmail(
         recipients=recipients,
@@ -235,8 +364,7 @@ def send_status_email(doc, action, remark=None):
         message=message,
         now=True
     )
-
-
+    
 @frappe.whitelist()
 def generate_dynamic_pdf(name):
     try:
