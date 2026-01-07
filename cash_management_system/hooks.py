@@ -143,9 +143,11 @@ scheduler_events = {
 # 	"monthly": [
 # 		"cash_management_system.tasks.monthly"
 # 	],
-            "0 11 * * *": [
-                "cash_management_system.cash_management_system.doctype.cms.cms.send_pending_approval_emails"
-            ]
+     "cron": {
+        "0 11 * * *": [
+            "cash_management_system.cash_management_system.doctype.cms.cms.send_pending_approval_emails"
+        ]
+    }
     }
 
 # Testing
