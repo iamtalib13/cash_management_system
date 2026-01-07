@@ -367,11 +367,9 @@ def send_status_email(doc, action, remark=None):
         now=True
     )
 
-
 # sejd the pending approval reminders
 import frappe
 from frappe.utils import date_diff, nowdate
-
 
 def get_pending_cms_requests():
     """
