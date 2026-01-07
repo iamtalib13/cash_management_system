@@ -8,6 +8,17 @@ from frappe.utils import nowdate
 from frappe.utils.pdf import get_pdf  # Import get_pdf directly
 from frappe.utils import now_datetime
 from frappe.utils import escape_html
+import frappe
+from frappe.utils import date_diff, nowdate
+from frappe.utils import now_datetime, get_url_to_form
+import frappe
+from frappe.utils import now_datetime
+import frappe
+from frappe.utils import get_url_to_form
+import frappe
+from frappe.utils import get_url_to_form, escape_html
+
+
 
 
 
@@ -173,9 +184,6 @@ class CMS(Document):
                     self.stage_2_emp_remark,
                     
                 )
-import frappe
-from frappe.utils import get_url_to_form, escape_html
-
 
 def send_status_email(doc, action, remark=None):
     # --------------------------------------------------
@@ -368,14 +376,6 @@ def send_status_email(doc, action, remark=None):
     )
 
 # sejd the pending approval reminders
-import frappe
-from frappe.utils import date_diff, nowdate
-from frappe.utils import now_datetime, get_url_to_form
-import frappe
-from frappe.utils import now_datetime
-import frappe
-from frappe.utils import get_url_to_form
-
 def get_pending_cms_requests():
     """
     Returns a list of dicts with pending CMS info.
@@ -449,7 +449,6 @@ def get_pending_cms_requests():
         print(r)
 
     return results
-
 
 def send_pending_approval_emails():
     pending_items = get_pending_cms_requests()
