@@ -144,7 +144,7 @@ scheduler_events = {
 # 		"cash_management_system.tasks.monthly"
 # 	],
             "0 8 * * *": [
-                "cash_management_system.cash_management_system.doctype.cms.cms.send_pending_approval_reminders"
+                "cash_management_system.cash_management_system.doctype.cms.cms.send_pending_approval_emails"
             ]
     }
 

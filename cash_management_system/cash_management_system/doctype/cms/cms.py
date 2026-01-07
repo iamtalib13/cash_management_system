@@ -371,11 +371,10 @@ def send_status_email(doc, action, remark=None):
 import frappe
 from frappe.utils import date_diff, nowdate
 from frappe.utils import now_datetime, get_url_to_form
-
-
-
 import frappe
 from frappe.utils import now_datetime
+import frappe
+from frappe.utils import get_url_to_form
 
 def get_pending_cms_requests():
     """
@@ -452,9 +451,6 @@ def get_pending_cms_requests():
     return results
 
 
-import frappe
-from frappe.utils import now_datetime, get_url_to_form
-
 def send_pending_approval_emails():
     pending_items = get_pending_cms_requests()
 
@@ -463,7 +459,7 @@ def send_pending_approval_emails():
         return
 
     # ---------------------------------------------
-    # FORCE TWO BUCKETS ONLY
+    # FORCE TWO BUCKETS ONLY (COM / HO)
     # ---------------------------------------------
     grouped = {
         "COM": {"email": None, "requests": []},
@@ -472,70 +468,108 @@ def send_pending_approval_emails():
 
     for item in pending_items:
         level = item["level"]
-
         grouped[level]["email"] = item["email"]
         grouped[level]["requests"].append(item)
 
     # ---------------------------------------------
-    # SEND MAX TWO EMAILS (COM & HO)
+    # SEND MAX TWO EMAILS
     # ---------------------------------------------
     for level, data in grouped.items():
         email = data["email"]
         requests = data["requests"]
 
         if not email or not requests:
-            continue  # Nothing to send
+            continue
 
+        # ---------------- TABLE ROWS ----------------
         rows_html = ""
         for idx, r in enumerate(requests, start=1):
             url = get_url_to_form("CMS", r["cms_name"])
             rows_html += f"""
             <tr>
-                <td style="border:1px solid #ddd;padding:6px;text-align:center;">{idx}</td>
-                <td style="border:1px solid #ddd;padding:6px;">
-                    <a href="{url}" target="_blank">
+                <td style="padding:8px;border:1px solid #e5e7eb;text-align:center;">{idx}</td>
+                <td style="padding:8px;border:1px solid #e5e7eb;">
+                    <a href="{url}" target="_blank"
+                       style="color:#2563eb;font-weight:600;text-decoration:none;">
                         {r["cms_name"]}
                     </a>
                 </td>
-                <td style="border:1px solid #ddd;padding:6px;">
+                <td style="padding:8px;border:1px solid #e5e7eb;">
                     {r["transaction_category"]}
                 </td>
-                <td style="border:1px solid #ddd;padding:6px;">
+                <td style="padding:8px;border:1px solid #e5e7eb;">
                     {r["pending"]}
                 </td>
             </tr>
             """
 
+        # ---------------- SUBJECT ----------------
         subject = f"CMS Pending {level} Approvals ({len(requests)})"
 
+        # ---------------- EMAIL BODY (CARD UI) ----------------
         message = f"""
-        <p>Hello,</p>
+            <table width="100%" cellpadding="0" cellspacing="0" style="background:#f3f4f6;padding:20px;font-family:Arial,Helvetica,sans-serif;">
+            <tr>
+                <td align="center">
 
-        <p>
-            You have <b>{len(requests)}</b> CMS request(s)
-            pending for <b>{level} approval</b>.
-        </p>
+                <table width="700" cellpadding="0" cellspacing="0" style="background:#ffffff;border:1px solid #e5e7eb;">
+                    
+                    <!-- HEADER -->
+                    <tr>
+                    <td style="background:#0f766e;color:#ffffff;padding:14px;text-align:center;font-size:18px;font-weight:bold;">
+                        Cash Management System
+                    </td>
+                    </tr>
 
-        <table width="100%" cellpadding="0" cellspacing="0"
-               style="border-collapse:collapse;font-size:13px;">
-            <thead style="background:#f3f4f6;">
-                <tr>
-                    <th style="border:1px solid #ddd;padding:6px;">Sr No</th>
-                    <th style="border:1px solid #ddd;padding:6px;">Request ID</th>
-                    <th style="border:1px solid #ddd;padding:6px;">Transaction</th>
-                    <th style="border:1px solid #ddd;padding:6px;">Pending Since</th>
-                </tr>
-            </thead>
-            <tbody>
-                {rows_html}
-            </tbody>
-        </table>
+                    <!-- BODY -->
+                    <tr>
+                    <td style="padding:20px;color:#111827;font-size:14px;">
 
-        <br>
-        <p>Regards,<br>
-        <b>Cash Management System</b></p>
-        """
+                        <p>Hello,</p>
 
+                        <p>
+                        You have <b>{len(requests)}</b> CMS request(s)
+                        pending for <b>{level} approval</b>.
+                        </p>
+
+                        <table width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;font-size:13px;margin-top:15px;">
+                        <thead>
+                            <tr style="background:#f9fafb;">
+                            <th style="border:1px solid #e5e7eb;padding:8px;">Sr No</th>
+                            <th style="border:1px solid #e5e7eb;padding:8px;">Request ID</th>
+                            <th style="border:1px solid #e5e7eb;padding:8px;">Transaction</th>
+                            <th style="border:1px solid #e5e7eb;padding:8px;">Pending Since</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {rows_html}
+                        </tbody>
+                        </table>
+
+                        <p style="margin-top:18px;font-size:13px;color:#6b7280;">
+                        Please review the above request(s) at the earliest.
+                        </p>
+
+                    </td>
+                    </tr>
+
+                    <!-- FOOTER -->
+                    <tr>
+                    <td style="background:#f9fafb;padding:12px;text-align:center;font-size:12px;color:#6b7280;">
+                        This is an automated notification.<br>
+                        Cash Management System
+                    </td>
+                    </tr>
+
+                </table>
+
+                </td>
+            </tr>
+            </table>
+            """
+
+
+        # ---------------- SEND ----------------
         frappe.sendmail(
             recipients=[email],
             subject=subject,
@@ -546,6 +580,7 @@ def send_pending_approval_emails():
         frappe.logger().info(
             f"CMS Pending Summary Sent | {level} | {email} | {len(requests)}"
         )
+
 
 @frappe.whitelist()
 def generate_dynamic_pdf(name):
