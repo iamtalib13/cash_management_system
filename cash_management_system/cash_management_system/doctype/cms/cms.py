@@ -366,7 +366,150 @@ def send_status_email(doc, action, remark=None):
         message=message,
         now=True
     )
-  
+
+
+# sejd the pending approval reminders
+import frappe
+from frappe.utils import date_diff, nowdate
+
+
+def get_pending_cms_requests():
+    """
+    Returns:
+    [
+        {
+            "cms_name": "...",
+            "level": "COM" | "HO",
+            "email": "...",
+            "pending_days": X
+        }
+    ]
+    """
+
+    results = []
+
+    cms_docs = frappe.get_all(
+        "CMS",
+        filters={"status": "Pending"},
+        fields=[
+            "name",
+            "stage_1_emp_status",
+            "stage_2_emp_status",
+            "modified"
+        ],
+    )
+
+    # --------------------------------------------------
+    # Resolve COM & HO from CMS User
+    # --------------------------------------------------
+    com_user = frappe.db.get_value(
+        "CMS User",
+        {"status": "COM-Approver"},
+        "name"
+    )
+
+    ho_user = frappe.db.get_value(
+        "CMS User",
+        {"status": "HO-Approver"},
+        "name"
+    )
+
+    com_email = frappe.db.get_value(
+        "Employee",
+        {"user_id": com_user},
+        "company_email"
+    ) if com_user else None
+
+    ho_email = frappe.db.get_value(
+        "Employee",
+        {"user_id": ho_user},
+        "company_email"
+    ) if ho_user else None
+
+    today = nowdate()
+
+    for doc in cms_docs:
+        pending_days = date_diff(today, doc.modified)
+
+        # ---------------- COM Pending ----------------
+        if doc.stage_1_emp_status == "Pending" and com_email:
+            results.append({
+                "cms_name": doc.name,
+                "level": "COM",
+                "email": com_email,
+                "pending_days": pending_days
+            })
+
+        # ---------------- HO Pending ----------------
+        elif (
+            doc.stage_1_emp_status == "Approved"
+            and doc.stage_2_emp_status == "Pending"
+            and ho_email
+        ):
+            results.append({
+                "cms_name": doc.name,
+                "level": "HO",
+                "email": ho_email,
+                "pending_days": pending_days
+            })
+
+    return results
+
+def send_pending_approval_emails():
+    pending_items = get_pending_cms_requests()
+
+    if not pending_items:
+        frappe.logger().info("CMS Reminder: No pending approvals")
+        return
+
+    for item in pending_items:
+        cms_name = item["cms_name"]
+        email = item["email"]
+        level = item["level"]
+        days = item["pending_days"]
+
+        record_url = get_url_to_form("CMS", cms_name)
+
+        subject = f"CMS Approval Pending ({days} days): {cms_name}"
+
+        message = f"""
+        <p>Hello,</p>
+
+        <p>
+            CMS request <b>{cms_name}</b> is pending for
+            <b>{level} approval</b>.
+        </p>
+
+        <p style="margin:10px 0;
+        padding:10px;
+        background:#fff7ed;
+        border-left:4px solid #f97316;">
+            ⏳ <b>Pending since:</b> {days} day(s)
+        </p>
+
+        <p>
+            👉 <a href="{record_url}" target="_blank">
+            Click here to review the request
+            </a>
+        </p>
+
+        <br>
+        <p>Regards,<br>
+        <b>Cash Management System</b></p>
+        """
+
+        frappe.sendmail(
+            recipients=[email],
+            subject=subject,
+            message=message,
+            now=True
+        )
+
+        frappe.logger().info(
+            f"CMS Reminder Sent | {cms_name} | {level} | {days} days"
+        )
+
+
 @frappe.whitelist()
 def generate_dynamic_pdf(name):
     try:
