@@ -462,52 +462,68 @@ def send_pending_approval_emails():
         frappe.logger().info("CMS Reminder: No pending approvals")
         return
 
-    # ✅ Group by (email + level)
-    grouped = {}
+    # ---------------------------------------------
+    # FORCE TWO BUCKETS ONLY
+    # ---------------------------------------------
+    grouped = {
+        "COM": {"email": None, "requests": []},
+        "HO":  {"email": None, "requests": []},
+    }
+
     for item in pending_items:
-        key = (item["email"], item["level"])
-        grouped.setdefault(key, []).append(item)
+        level = item["level"]
 
-    for (email, level), items in grouped.items():
+        grouped[level]["email"] = item["email"]
+        grouped[level]["requests"].append(item)
+
+    # ---------------------------------------------
+    # SEND MAX TWO EMAILS (COM & HO)
+    # ---------------------------------------------
+    for level, data in grouped.items():
+        email = data["email"]
+        requests = data["requests"]
+
+        if not email or not requests:
+            continue  # Nothing to send
+
         rows_html = ""
-
-        for idx, item in enumerate(items, start=1):
-            record_url = get_url_to_form("CMS", item["cms_name"])
+        for idx, r in enumerate(requests, start=1):
+            url = get_url_to_form("CMS", r["cms_name"])
             rows_html += f"""
             <tr>
                 <td style="border:1px solid #ddd;padding:6px;text-align:center;">{idx}</td>
                 <td style="border:1px solid #ddd;padding:6px;">
-                    <a href="{record_url}" target="_blank" style="color:#2563eb;font-weight:600;">
-                        {item["cms_name"]}
+                    <a href="{url}" target="_blank">
+                        {r["cms_name"]}
                     </a>
                 </td>
                 <td style="border:1px solid #ddd;padding:6px;">
-                    {item["transaction_category"]}
+                    {r["transaction_category"]}
                 </td>
                 <td style="border:1px solid #ddd;padding:6px;">
-                    {item["pending"]}
+                    {r["pending"]}
                 </td>
             </tr>
             """
 
-        subject = f"CMS Pending {level} Approvals ({len(items)})"
+        subject = f"CMS Pending {level} Approvals ({len(requests)})"
 
         message = f"""
         <p>Hello,</p>
 
         <p>
-            You have <b>{len(items)}</b> CMS request(s)
+            You have <b>{len(requests)}</b> CMS request(s)
             pending for <b>{level} approval</b>.
         </p>
 
         <table width="100%" cellpadding="0" cellspacing="0"
                style="border-collapse:collapse;font-size:13px;">
-            <thead>
-                <tr style="background:#f3f4f6;">
+            <thead style="background:#f3f4f6;">
+                <tr>
                     <th style="border:1px solid #ddd;padding:6px;">Sr No</th>
                     <th style="border:1px solid #ddd;padding:6px;">Request ID</th>
                     <th style="border:1px solid #ddd;padding:6px;">Transaction</th>
-                    <th style="border:1px solid #ddd;padding:6px;">Pending</th>
+                    <th style="border:1px solid #ddd;padding:6px;">Pending Since</th>
                 </tr>
             </thead>
             <tbody>
@@ -516,7 +532,8 @@ def send_pending_approval_emails():
         </table>
 
         <br>
-        <p>Regards,<br><b>Cash Management System</b></p>
+        <p>Regards,<br>
+        <b>Cash Management System</b></p>
         """
 
         frappe.sendmail(
@@ -527,7 +544,7 @@ def send_pending_approval_emails():
         )
 
         frappe.logger().info(
-            f"CMS Pending Summary Sent | {level} | {email} | {len(items)} requests"
+            f"CMS Pending Summary Sent | {level} | {email} | {len(requests)}"
         )
 
 @frappe.whitelist()
