@@ -370,18 +370,17 @@ def send_status_email(doc, action, remark=None):
 # sejd the pending approval reminders
 import frappe
 from frappe.utils import date_diff, nowdate
+from frappe.utils import now_datetime, get_url_to_form
+
+
+
+import frappe
+from frappe.utils import now_datetime
 
 def get_pending_cms_requests():
     """
-    Returns:
-    [
-        {
-            "cms_name": "...",
-            "level": "COM" | "HO",
-            "email": "...",
-            "pending_days": X
-        }
-    ]
+    Returns a list of dicts with pending CMS info.
+    Does NOT send email.
     """
 
     results = []
@@ -391,67 +390,70 @@ def get_pending_cms_requests():
         filters={"status": "Pending"},
         fields=[
             "name",
+            "transaction_category",
             "stage_1_emp_status",
             "stage_2_emp_status",
-            "modified"
+            "modified",
         ],
     )
 
-    # --------------------------------------------------
-    # Resolve COM & HO from CMS User
-    # --------------------------------------------------
-    com_user = frappe.db.get_value(
-        "CMS User",
-        {"status": "COM-Approver"},
-        "name"
-    )
-
-    ho_user = frappe.db.get_value(
-        "CMS User",
-        {"status": "HO-Approver"},
-        "name"
-    )
+    # Resolve COM & HO users
+    com_user = frappe.db.get_value("CMS User", {"status": "COM-Approver"}, "name")
+    ho_user = frappe.db.get_value("CMS User", {"status": "HO-Approver"}, "name")
 
     com_email = frappe.db.get_value(
-        "Employee",
-        {"user_id": com_user},
-        "company_email"
+        "Employee", {"user_id": com_user}, "company_email"
     ) if com_user else None
 
     ho_email = frappe.db.get_value(
-        "Employee",
-        {"user_id": ho_user},
-        "company_email"
+        "Employee", {"user_id": ho_user}, "company_email"
     ) if ho_user else None
 
-    today = nowdate()
+    now = now_datetime()
 
     for doc in cms_docs:
-        pending_days = date_diff(today, doc.modified)
+        delta = now - doc.modified
+        days = delta.days
+        hours = delta.seconds // 3600
+        pending_text = f"{days}d {hours}h"
 
-        # ---------------- COM Pending ----------------
+        # COM pending
         if doc.stage_1_emp_status == "Pending" and com_email:
-            results.append({
+            row = {
                 "cms_name": doc.name,
+                "transaction_category": doc.transaction_category,
                 "level": "COM",
                 "email": com_email,
-                "pending_days": pending_days
-            })
+                "pending": pending_text,
+            }
+            results.append(row)
 
-        # ---------------- HO Pending ----------------
+        # HO pending
         elif (
             doc.stage_1_emp_status == "Approved"
             and doc.stage_2_emp_status == "Pending"
             and ho_email
         ):
-            results.append({
+            row = {
                 "cms_name": doc.name,
+                "transaction_category": doc.transaction_category,
                 "level": "HO",
                 "email": ho_email,
-                "pending_days": pending_days
-            })
+                "pending": pending_text,
+            }
+            results.append(row)
+
+    # 🔍 DEBUG OUTPUT
+    frappe.logger().info(f"CMS Pending Payload → {results}")
+    print("\n=== CMS PENDING REQUESTS ===")
+    for r in results:
+        print(r)
 
     return results
+
+
+import frappe
+from frappe.utils import now_datetime, get_url_to_form
 
 def send_pending_approval_emails():
     pending_items = get_pending_cms_requests()
@@ -460,40 +462,61 @@ def send_pending_approval_emails():
         frappe.logger().info("CMS Reminder: No pending approvals")
         return
 
+    # ✅ Group by (email + level)
+    grouped = {}
     for item in pending_items:
-        cms_name = item["cms_name"]
-        email = item["email"]
-        level = item["level"]
-        days = item["pending_days"]
+        key = (item["email"], item["level"])
+        grouped.setdefault(key, []).append(item)
 
-        record_url = get_url_to_form("CMS", cms_name)
+    for (email, level), items in grouped.items():
+        rows_html = ""
 
-        subject = f"CMS Approval Pending ({days} days): {cms_name}"
+        for idx, item in enumerate(items, start=1):
+            record_url = get_url_to_form("CMS", item["cms_name"])
+            rows_html += f"""
+            <tr>
+                <td style="border:1px solid #ddd;padding:6px;text-align:center;">{idx}</td>
+                <td style="border:1px solid #ddd;padding:6px;">
+                    <a href="{record_url}" target="_blank" style="color:#2563eb;font-weight:600;">
+                        {item["cms_name"]}
+                    </a>
+                </td>
+                <td style="border:1px solid #ddd;padding:6px;">
+                    {item["transaction_category"]}
+                </td>
+                <td style="border:1px solid #ddd;padding:6px;">
+                    {item["pending"]}
+                </td>
+            </tr>
+            """
+
+        subject = f"CMS Pending {level} Approvals ({len(items)})"
 
         message = f"""
         <p>Hello,</p>
 
         <p>
-            CMS request <b>{cms_name}</b> is pending for
-            <b>{level} approval</b>.
+            You have <b>{len(items)}</b> CMS request(s)
+            pending for <b>{level} approval</b>.
         </p>
 
-        <p style="margin:10px 0;
-        padding:10px;
-        background:#fff7ed;
-        border-left:4px solid #f97316;">
-            ⏳ <b>Pending since:</b> {days} day(s)
-        </p>
-
-        <p>
-            👉 <a href="{record_url}" target="_blank">
-            Click here to review the request
-            </a>
-        </p>
+        <table width="100%" cellpadding="0" cellspacing="0"
+               style="border-collapse:collapse;font-size:13px;">
+            <thead>
+                <tr style="background:#f3f4f6;">
+                    <th style="border:1px solid #ddd;padding:6px;">Sr No</th>
+                    <th style="border:1px solid #ddd;padding:6px;">Request ID</th>
+                    <th style="border:1px solid #ddd;padding:6px;">Transaction</th>
+                    <th style="border:1px solid #ddd;padding:6px;">Pending</th>
+                </tr>
+            </thead>
+            <tbody>
+                {rows_html}
+            </tbody>
+        </table>
 
         <br>
-        <p>Regards,<br>
-        <b>Cash Management System</b></p>
+        <p>Regards,<br><b>Cash Management System</b></p>
         """
 
         frappe.sendmail(
@@ -504,9 +527,8 @@ def send_pending_approval_emails():
         )
 
         frappe.logger().info(
-            f"CMS Reminder Sent | {cms_name} | {level} | {days} days"
+            f"CMS Pending Summary Sent | {level} | {email} | {len(items)} requests"
         )
-
 
 @frappe.whitelist()
 def generate_dynamic_pdf(name):
