@@ -127,7 +127,7 @@ app_license = "MIT"
 # Scheduled Tasks
 # ---------------
 
-# scheduler_events = {
+scheduler_events = {
 # 	"all": [
 # 		"cash_management_system.tasks.all"
 # 	],
@@ -143,7 +143,10 @@ app_license = "MIT"
 # 	"monthly": [
 # 		"cash_management_system.tasks.monthly"
 # 	],
-# }
+            "0 8 * * *": [
+                "cash_management_system.cash_management_system.doctype.cms.cms.send_pending_approval_reminders"
+            ]
+    }
 
 # Testing
 # -------
