@@ -18,11 +18,6 @@ from frappe.utils import get_url_to_form
 import frappe
 from frappe.utils import get_url_to_form, escape_html
 
-
-
-
-
-
 class CMS(Document):
     def check_cheque_details(self):
             all_fields_non_empty = True  # Flag to track if all fields are non-empty
@@ -139,7 +134,7 @@ class CMS(Document):
         # If com is not found, return None
         return None
     # --------------------------------------------------
-    # EMAIL TRIGGERS (SAFE & RELIABLE)
+    # EMAIL TRIGGERS every tine the request change the status (SAFE & RELIABLE)
     # --------------------------------------------------
     def on_update(self):
         old = self._doc_before_save
@@ -148,7 +143,7 @@ class CMS(Document):
 
         # COM approval / rejection
         if old.stage_1_emp_status != self.stage_1_emp_status:
-            frappe.msgprint("inside com status change")
+            # frappe.msgprint("inside com status change")
             if self.stage_1_emp_status == "Approved":
                 # frappe.msgprint("inside com approved")
                 send_status_email(
@@ -185,50 +180,103 @@ class CMS(Document):
                     
                 )
 
+# --------------------------------------------------
+# EMAIL FUNCTION - SEND STATUS UPDATE EMAIL
+# --------------------------------------------------
 def send_status_email(doc, action, remark=None):
     # --------------------------------------------------
-    # 1. Get recipient email from Employee.company_email
+    # 1. CREATOR EMAIL - WITH FALLBACKS (FIXED)
     # --------------------------------------------------
-    employee_email = frappe.db.get_value(
-        "Employee",
-        {"user_id": doc.owner},
+    owner = doc.owner
+    creator_email = None
+    
+    # Priority 1: Employee company_email
+    emp_company_email = frappe.db.get_value(
+        "Employee", 
+        {"user_id": owner}, 
         "company_email"
     )
-
-    if not employee_email:
-        frappe.log_error(
-            f"No company_email found for user {doc.owner}",
-            "CMS Email Error"
+    
+    # Priority 2: Employee personal_email  
+    if not emp_company_email:
+        emp_personal_email = frappe.db.get_value(
+            "Employee", 
+            {"user_id": owner}, 
+            "personal_email"
         )
-        return
+        emp_company_email = emp_personal_email
+    
+    # Priority 3: Use owner (user_id) as email
+    creator_email = emp_company_email or owner
 
-    recipients = [employee_email]
+    # Log for debugging (won't stop execution)
+    frappe.log_error(
+        f"Creator lookup - Owner: {owner}, Email: {creator_email}",
+        "CMS Email Debug - Creator"
+    )
+
+    # Start recipients with CREATOR (guaranteed)
+    recipients = set([creator_email])
 
     # --------------------------------------------------
-    # 2. Record URL
+    # 2. COM & HO USERS FROM CMS USER
+    # --------------------------------------------------
+    com_user = frappe.db.get_value(
+        "CMS User",
+        {"status": "COM-Approver"},
+        "name"
+    )
+
+    ho_user = frappe.db.get_value(
+        "CMS User",
+        {"status": "HO-Approver"},
+        "name"
+    )
+
+    # --------------------------------------------------
+    # 3. ADD COM EMAIL
+    # --------------------------------------------------
+    if com_user:
+        com_email = frappe.db.get_value(
+            "Employee",
+            {"user_id": com_user},
+            "company_email"
+        )
+        if com_email:
+            recipients.add(com_email)
+
+    # --------------------------------------------------
+    # 4. ADD HO EMAIL
+    # --------------------------------------------------
+    if ho_user:
+        ho_email = frappe.db.get_value(
+            "Employee",
+            {"user_id": ho_user},
+            "company_email"
+        )
+        if ho_email:
+            recipients.add(ho_email)
+
+    # --------------------------------------------------
+    # 5. RECORD URL
     # --------------------------------------------------
     record_url = get_url_to_form(doc.doctype, doc.name)
 
     # --------------------------------------------------
-    # 3. Approval progress step (TEXT → CIRCLE)
+    # 6. APPROVAL PROGRESS UI
     # --------------------------------------------------
     def step(label, status):
         color = {
             "Approved": "#16a34a",
-            "Rejected": "#dc2626",
+            "Rejected": "#dc2626", 
             "Pending": "#f59e0b"
         }.get(status, "#9ca3af")
 
         return f"""
-        <div style="flex:1;text-align:center;width:100%;">
-
-            <!-- Label + Status -->
+        <div style="flex:1;text-align:center;">
             <div style="font-size:12px;color:#374151;margin-bottom:8px;">
-                {label}<br>
-                <b>{status}</b>
+                {label}<br><b>{status}</b>
             </div>
-
-            <!-- Circle BELOW -->
             <div style="
                 margin:0 auto;
                 width:28px;
@@ -240,10 +288,10 @@ def send_status_email(doc, action, remark=None):
                 align-items:center;
                 justify-content:center;
                 font-size:14px;
+                font-weight:bold;
             ">
                 ✓
             </div>
-
         </div>
         """
 
@@ -252,61 +300,40 @@ def send_status_email(doc, action, remark=None):
     final_status = doc.status or "Pending"
 
     # --------------------------------------------------
-    # 4. Subject
+    # 7. SUBJECT
     # --------------------------------------------------
     subject = f"CMS Request {doc.name} – {action}"
 
     # --------------------------------------------------
-    # 5. Email HTML
+    # 8. EMAIL HTML - FIXED ESCAPING
     # --------------------------------------------------
+    safe_action = frappe.utils.escape_html(action or "")
+    safe_remark = frappe.utils.escape_html(remark or "")
+    
     message = f"""
     <div style="font-family:Arial,Helvetica,sans-serif;background:#f3f4f6;padding:20px;">
-      <div style="
-        max-width:650px;
-        margin:auto;
-        background:white;
-        border-radius:10px;
-        box-shadow:0 10px 25px rgba(0,0,0,.08);
-        overflow:hidden;
-      ">
+      <div style="max-width:650px;margin:auto;background:white;
+                  border-radius:10px;box-shadow:0 10px 25px rgba(0,0,0,.08);">
 
-        <!-- Header -->
-        <div style="
-          background:#0f766e;
-          padding:18px;
-          color:white;
-          text-align:center;
-          font-size:18px;
-          font-weight:bold;
-        ">
+        <div style="background:#0f766e;padding:18px;color:white;
+                    text-align:center;font-size:18px;font-weight:bold;">
           Cash Management System
         </div>
 
-        <!-- Body -->
         <div style="padding:22px;color:#111827;">
+          <p>Hello,</p>
 
-          <p style="font-size:15px;">Hello,</p>
-
-          <p style="font-size:15px;">
+          <p>
             Your CMS request <b>{doc.name}</b> has been
-            <b style="color:#0f766e;">{escape_html(action)}</b>.
+            <b style="color:#0f766e;">{safe_action}</b>.
           </p>
 
-          <!-- Remarks -->
           {f'''
-          <div style="
-            background:#fef3c7;
-            border-left:5px solid #f59e0b;
-            padding:12px;
-            margin:16px 0;
-            font-size:14px;
-          ">
-            <b>Remarks:</b><br>
-            {escape_html(remark)}
+          <div style="background:#fef3c7;border-left:5px solid #f59e0b;
+                      padding:12px;margin:16px 0;">
+            <b>Remarks:</b><br>{safe_remark}
           </div>
           ''' if remark else ""}
-
-          <!-- Progress -->
           <div style="margin:22px 0;">
             <div style="font-weight:bold;margin-bottom:10px;">
               Approval Progress
@@ -326,19 +353,11 @@ def send_status_email(doc, action, remark=None):
             </div>
           </div>
 
-          <!-- CTA -->
           <div style="text-align:center;margin:28px 0;">
             <a href="{record_url}" target="_blank"
-               style="
-                background:#0f766e;
-                color:white;
-                padding:12px 22px;
-                text-decoration:none;
-                border-radius:6px;
-                font-size:14px;
-                font-weight:bold;
-                display:inline-block;
-               ">
+               style="background:#0f766e;color:white;
+                      padding:12px 22px;border-radius:6px;
+                      text-decoration:none;font-weight:bold;">
               Open CMS Request
             </a>
           </div>
@@ -346,36 +365,32 @@ def send_status_email(doc, action, remark=None):
           <p style="font-size:13px;color:#6b7280;">
             Please login to the system for more details.
           </p>
-
         </div>
 
-        <!-- Footer -->
-        <div style="
-          background:#f9fafb;
-          padding:14px;
-          text-align:center;
-          font-size:12px;
-          color:#6b7280;
-        ">
+        <div style="background:#f9fafb;padding:14px;text-align:center;
+                    font-size:12px;color:#6b7280;">
           This is an automated notification.<br>
           Cash Management System
         </div>
-
       </div>
     </div>
     """
 
     # --------------------------------------------------
-    # 6. Send Email
+    # 9. SEND EMAIL TO ALL (CREATOR FIRST + COM + HO)
     # --------------------------------------------------
-    frappe.sendmail(
-        recipients=recipients,
-        subject=subject,
-        message=message,
-        now=True
-    )
+    try:
+        frappe.sendmail(
+            recipients=list(recipients),
+            subject=subject,
+            message=message,
+            now=True
+        )
+        frappe.msgprint(f"Status email sent to: {', '.join(recipients)}")
+    except Exception as e:
+        # frappe.log_error(f"Email send failed: {str(e)}\nRecipients: {recipients}", "CMS Email Send Error")
 
-# sejd the pending approval reminders
+# send the pending approval reminders
 def get_pending_cms_requests():
     """
     Returns a list of dicts with pending CMS info.
