@@ -388,7 +388,7 @@ def send_status_email(doc, action, remark=None):
         )
         frappe.msgprint(f"Status email sent to: {', '.join(recipients)}")
     except Exception as e:
-        frappe.log_error(f"Email send failed: {str(e)}\nRecipients: {recipients}", "CMS Email Send Error")
+        # frappe.log_error(f"Email send failed: {str(e)}\nRecipients: {recipients}", "CMS Email Send Error")
 
 # send the pending approval reminders
 def get_pending_cms_requests():
