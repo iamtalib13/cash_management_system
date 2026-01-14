@@ -379,16 +379,16 @@ def send_status_email(doc, action, remark=None):
     # --------------------------------------------------
     # 9. SEND EMAIL TO ALL (CREATOR FIRST + COM + HO)
     # --------------------------------------------------
-    try:
-        frappe.sendmail(
+    # try:
+    frappe.sendmail(
             recipients=list(recipients),
             subject=subject,
             message=message,
             now=True
-        )
-        frappe.msgprint(f"Status email sent to: {', '.join(recipients)}")
-    except Exception as e:
-        # frappe.log_error(f"Email send failed: {str(e)}\nRecipients: {recipients}", "CMS Email Send Error")
+     )
+        # frappe.msgprint(f"Status email sent to: {', '.join(recipients)}")
+    # except Exception as e:
+    #     # frappe.log_error(f"Email send failed: {str(e)}\nRecipients: {recipients}", "CMS Email Send Error")
 
 # send the pending approval reminders
 def get_pending_cms_requests():
