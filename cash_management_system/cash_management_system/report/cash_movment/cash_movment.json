@@ -11,7 +11,7 @@
  "is_standard": "Yes",
  "letter_head": "Sahayog Letter Head",
  "letterhead": null,
- "modified": "2026-01-05 15:41:33.153514",
+ "modified": "2026-01-15 11:17:28.716921",
  "modified_by": "Administrator",
  "module": "Cash Management System",
  "name": "Cash Movment",
@@ -26,6 +26,9 @@
   },
   {
    "role": "Operations Support Manager"
+  },
+  {
+   "role": "Employee"
   }
  ],
  "timeout": 0
