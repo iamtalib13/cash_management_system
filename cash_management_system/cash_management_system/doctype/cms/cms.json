@@ -319,7 +319,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2024-11-22 14:53:17.096896",
+ "modified": "2026-01-15 11:44:10.819890",
  "modified_by": "Administrator",
  "module": "Cash Management System",
  "name": "CMS",
@@ -337,8 +337,17 @@
    "role": "System Manager",
    "share": 1,
    "write": 1
+  },
+  {
+   "create": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Employee",
+   "select": 1,
+   "write": 1
   }
  ],
+ "row_format": "Dynamic",
  "sort_field": "modified",
  "sort_order": "DESC",
  "states": [
