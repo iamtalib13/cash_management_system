@@ -17,6 +17,7 @@ import frappe
 from frappe.utils import get_url_to_form
 import frappe
 from frappe.utils import get_url_to_form, escape_html
+from frappe.utils import nowdate, add_days, getdate
 
 class CMS(Document):
     def check_cheque_details(self):
@@ -44,7 +45,8 @@ class CMS(Document):
             # Now you can take action based on the all_fields_non_empty flag
             if not all_fields_non_empty:
                 # Raise a validation error if any field is empty
-                frappe.throw("Please Fill Amount.")            
+                frappe.throw("Please Fill Amount.")  
+                      
 
     def validate(self):
         if not self.stage_1_emp_status:
@@ -98,8 +100,8 @@ class CMS(Document):
         # Set the email value if found
         if com_email:
             self.com_email = com_email
-        else:
-            frappe.msgprint(f"No email found for user: {self.com_email}")
+        # else:
+            # frappe.msgprint(f"No email found for user: {self.com_email}")
         # Convert fields to uppercase if they exist
         # if self.ifsc_code:
         #     self.ifsc_code = self.ifsc_code.upper()
@@ -113,14 +115,25 @@ class CMS(Document):
 
 
     def check_transaction_date(self):
-        # Get the current date
-        current_date = nowdate()
+        # Today's date
+        current_date = getdate(nowdate())
 
-        # Check if the transaction date is in the past
-        if self.date_of_transaction < current_date:
-            # Raise a validation error if the date is in the past
-            frappe.throw(_("Transaction date cannot be in the past. Please select the current date or a future date."))
+        # Convert transaction date to date object
+        transaction_date = getdate(self.date_of_transaction)
 
+        # 1. Date should not be in the past
+        if transaction_date < current_date:
+            frappe.throw(
+                _("Transaction date cannot be in the past. Please select today or a future date.")
+            )
+
+        # 2. Date should not be more than 5 days from today
+        max_allowed_date = add_days(current_date, 5)
+
+        if transaction_date > max_allowed_date:
+            frappe.throw(
+                _("Transaction date cannot be more than 5 days from today.")
+            )
 
     def get_com(self, branch):
     
@@ -721,3 +734,4 @@ def before_print(doc, print_format=None):
     additional_data = frappe.db.get_value('Another Doctype', {'doc_name': doc.name}, 'desired_field')
     # Attach it to the document context
     doc.additional_data = additional_data
+    

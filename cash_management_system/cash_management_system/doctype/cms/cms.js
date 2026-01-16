@@ -1590,6 +1590,9 @@ frappe.ui.form.on("CMS", {
   // validate: function (frm) {
   //   //let custodian_1 = frm.doc.custodian_1;
   // },
+  transaction_category: function (frm) {
+    toggle_cheque_number(frm);
+  },
 });
 
 // frappe.ui.form.on("CMS", {
@@ -1611,4 +1614,23 @@ function preserve_child_tables(frm) {
       frm.doc[field] = frm.doc[field].map((row) => ({ ...row }));
     }
   });
+}
+function toggle_cheque_number(frm) {
+  const is_deposit = frm.doc.transaction_category === "DEPOSIT";
+
+  // Access child table grid
+  const grid = frm.get_field("cheque_details").grid;
+
+  if (!grid) return;
+
+  // Hide / show column
+  grid.toggle_display("cheque_number", !is_deposit);
+
+  // Optional but recommended: clear existing values
+  if (is_deposit) {
+    (frm.doc.cheque_details || []).forEach((row) => {
+      row.cheque_number = null;
+    });
+    frm.refresh_field("cheque_details");
+  }
 }
