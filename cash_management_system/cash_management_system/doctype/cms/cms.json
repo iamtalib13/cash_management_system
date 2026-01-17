@@ -38,6 +38,13 @@
   "approved_movement_charges",
   "branch_details_section",
   "branch",
+  "mode_of_transportation_section",
+  "vehicle_type",
+  "vehicle_number",
+  "driver_name",
+  "driver_contact_number",
+  "date_and_time_of_movement",
+  "remarks",
   "approval_tab",
   "status_section",
   "status",
@@ -315,11 +322,51 @@
    "fieldname": "transaction_receipt",
    "fieldtype": "Attach",
    "label": "Transaction Receipt"
+  },
+  {
+   "depends_on": "eval:doc.transaction_category === \"CIT\"\n",
+   "fieldname": "mode_of_transportation_section",
+   "fieldtype": "Section Break",
+   "label": "Mode Of Transportation"
+  },
+  {
+   "fieldname": "vehicle_number",
+   "fieldtype": "Data",
+   "label": "Vehicle Number",
+   "mandatory_depends_on": "eval:doc.transaction_category === \"CIT\"\n"
+  },
+  {
+   "fieldname": "driver_name",
+   "fieldtype": "Data",
+   "label": "Driver Name"
+  },
+  {
+   "fieldname": "driver_contact_number",
+   "fieldtype": "Data",
+   "label": "Driver Contact Number"
+  },
+  {
+   "fieldname": "date_and_time_of_movement",
+   "fieldtype": "Datetime",
+   "label": "Date & Time of Movement",
+   "mandatory_depends_on": "eval:doc.transaction_category === \"CIT\"\n"
+  },
+  {
+   "fieldname": "remarks",
+   "fieldtype": "Small Text",
+   "label": "Remarks"
+  },
+  {
+   "fieldname": "vehicle_type",
+   "fieldtype": "Select",
+   "label": "Vehicle  Type",
+   "mandatory_depends_on": "eval:doc.transaction_category === \"CIT\"\n",
+   "options": "\n2 wheeler\n4 wheeler"
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-01-15 11:44:10.819890",
+ "modified": "2026-01-17 14:21:40.459233",
  "modified_by": "Administrator",
  "module": "Cash Management System",
  "name": "CMS",
@@ -342,7 +389,7 @@
    "create": 1,
    "read": 1,
    "report": 1,
-   "role": "Employee",
+   "role": "Branch Manager",
    "select": 1,
    "write": 1
   }

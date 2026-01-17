@@ -65,6 +65,25 @@ frappe.ui.form.on("CMS", {
     // if (frm.doc.docstatus === 0 && !frm.is_new()) {
     //   frm.trigger("creator_submit_btn");
     // }
+    // Only for CIT transactions
+    if (frm.doc.transaction_category !== "CIT") return;
+
+    // Do not show if already acknowledged
+    if (frm.doc.cit_acknowledged) return;
+
+    // Add ACK button
+    frm.add_custom_button(
+      __("CIT Cash Reached"),
+      function () {
+        frappe.confirm(
+          "Confirm that CIT cash has safely reached the destination?",
+          function () {
+            send_cit_ack(frm);
+          }
+        );
+      },
+      __("Actions")
+    );
   },
   // home_button: function (frm) {
   //   frm.add_custom_button(__("Home"), function () {
@@ -1645,4 +1664,26 @@ function toggle_cheque_number(frm) {
     });
     frm.refresh_field("cheque_details");
   }
+}
+function send_cit_ack(frm) {
+  frappe.call({
+    method:
+      "cash_management_system.cash_management_system.doctype.cms.cms.send_cit_ack",
+    args: {
+      cms_name: frm.doc.name,
+    },
+    freeze: true,
+    callback: function (r) {
+      if (!r.exc) {
+        frappe.show_alert(
+          {
+            message: __("CIT Acknowledgement sent successfully"),
+            indicator: "green",
+          },
+          6
+        );
+        frm.reload_doc();
+      }
+    },
+  });
 }
