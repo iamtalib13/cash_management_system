@@ -13,6 +13,18 @@ frappe.ui.form.on("CMS", {
     });
     frm.trigger("custodian_1_filter");
     frm.trigger("custodian_2_filter");
+    if (!frappe.user_roles.includes("Branch Manager")) {
+      frm.disable_save();
+      frm.page.clear_primary_action();
+      frm.page.clear_secondary_action();
+      frm.page.main.empty();
+
+      frm.page.main.html(`
+                <div style="padding:40px;text-align:center;color:#888;">
+                    You are not authorized to view this page.
+                </div>
+            `);
+    }
   },
   validate: function (frm) {
     //frm.trigger("check_mandatory_child");
