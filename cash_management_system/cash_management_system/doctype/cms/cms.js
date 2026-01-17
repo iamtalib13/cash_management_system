@@ -67,6 +67,7 @@ frappe.ui.form.on("CMS", {
     // }
     // Only for CIT transactions
     if (frm.doc.transaction_category !== "CIT") return;
+    if (frm.doc.stage_2_emp_status !== "Approved") return;
 
     // Do not show if already acknowledged
     if (frm.doc.cit_acknowledged) return;
