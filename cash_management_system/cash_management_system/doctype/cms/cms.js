@@ -13,18 +13,23 @@ frappe.ui.form.on("CMS", {
     });
     frm.trigger("custodian_1_filter");
     frm.trigger("custodian_2_filter");
-    if (!frappe.user_roles.includes("Branch Manager")) {
-      frm.disable_save();
-      frm.page.clear_primary_action();
-      frm.page.clear_secondary_action();
-      frm.page.main.empty();
+    frappe.call({
+      method: "frappe.client.get_value",
+      args: {
+        doctype: "Employee",
+        filters: { user_id: frappe.session.user },
+        fieldname: ["designation"],
+      },
+      callback: function (r) {
+        frm._user_designation = (r.message?.designation || "")
+          .toUpperCase()
+          .trim();
+        console.log("User Designation:", frm._user_designation);
 
-      frm.page.main.html(`
-                <div style="padding:40px;text-align:center;color:#888;">
-                    You are not authorized to view this page.
-                </div>
-            `);
-    }
+        // ✅ run access check ONLY after designation is available
+        apply_page_access_control(frm);
+      },
+    });
   },
   validate: function (frm) {
     //frm.trigger("check_mandatory_child");
@@ -166,7 +171,11 @@ frappe.ui.form.on("CMS", {
         // --------------------------------------------------
         // COM APPROVER ✅
         // --------------------------------------------------
-        else if (role === "COM-Approver") {
+        else if (
+          role === "COM-Approver" ||
+          frm._user_designation === "REGIONAL OPERATION MANAGER" ||
+          frm._user_designation === "ZONAL MANAGER"
+        ) {
           frm.disable_save(); // only save, NOT form
           frm.trigger("com_read_only");
           frm.trigger("com_show_intro");
@@ -1684,4 +1693,32 @@ function send_cit_ack(frm) {
       }
     },
   });
+}
+function apply_page_access_control(frm) {
+  const roles = frappe.user_roles || [];
+  const designation = frm._user_designation || "";
+
+  const isBranchManager = roles.includes("Branch Manager");
+
+  const isSpecialDesignation =
+    designation === "REGIONAL OPERATION MANAGER" ||
+    designation === "ZONAL MANAGER";
+
+  // ✅ Allowed users → DO NOTHING
+  if (isBranchManager || isSpecialDesignation) {
+    console.log("Access allowed");
+    return;
+  }
+
+  // 🚫 Block everyone else
+  frm.disable_save();
+  frm.page.clear_primary_action();
+  frm.page.clear_secondary_action();
+  frm.page.main.empty();
+
+  frm.page.main.html(`
+    <div style="padding:40px;text-align:center;color:#888;font-size:16px;">
+      You are not authorized to view this page.
+    </div>
+  `);
 }

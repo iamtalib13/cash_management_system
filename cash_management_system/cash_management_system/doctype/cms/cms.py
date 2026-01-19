@@ -32,7 +32,7 @@ class CMS(Document):
             # Now you can take action based on the all_fields_non_empty flag
             if not all_fields_non_empty:
                 # Raise a validation error if any field is empty
-                frappe.throw("Please ensure that 'cheque_number' and 'cheque_amount' are filled in all entries.")
+                frappe.throw("Please ensure that ' Cheque Number ' and ' Cheque Amount ' are filled in all entries.")
     def check_amount_details(self):
             all_fields_non_empty = True  # Flag to track if all fields are non-empty
 
