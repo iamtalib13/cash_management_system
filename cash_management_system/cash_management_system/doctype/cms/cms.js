@@ -70,21 +70,17 @@ frappe.ui.form.on("CMS", {
     if (frm.doc.stage_2_emp_status !== "Approved") return;
 
     // Do not show if already acknowledged
-    if (frm.doc.cit_acknowledged) return;
-
+    if (frm.doc.acknowledged) return;
     // Add ACK button
-    frm.add_custom_button(
-      __("CIT Cash Reached"),
-      function () {
-        frappe.confirm(
-          "Confirm that CIT cash has safely reached the destination?",
-          function () {
-            send_cit_ack(frm);
-          }
-        );
-      },
-      __("Actions")
-    );
+    frm.add_custom_button(__("CIT Cash Reached"), function () {
+      frappe.confirm(
+        "Confirm that CIT cash has safely reached the destination?",
+        function () {
+          send_cit_ack(frm);
+          // this is just a button showing cdoe sending acknowledgement frappe call is below
+        },
+      );
+    });
   },
   // home_button: function (frm) {
   //   frm.add_custom_button(__("Home"), function () {
@@ -269,7 +265,7 @@ frappe.ui.form.on("CMS", {
         " request has been Approved. You may now proceed to make the " +
         transaction_category.toLowerCase() +
         ".</span>",
-      "green"
+      "green",
     );
   },
   ho_read_only: function (frm) {
@@ -326,7 +322,7 @@ frappe.ui.form.on("CMS", {
           transaction_category.toLowerCase() +
           " request has been submitted successfully." +
           "</span>",
-        "green"
+        "green",
       );
       // frm.disable_save();
     } else if (frm.doc.stage_1_emp_status == "Rejected") {
@@ -340,7 +336,7 @@ frappe.ui.form.on("CMS", {
           "</span>" +
           "<br><b>Reason :- <b>" +
           stage_1_emp_remark,
-        "red"
+        "red",
       );
     } else if (frm.doc.stage_2_emp_status == "Rejected") {
       frm.set_intro(
@@ -353,7 +349,7 @@ frappe.ui.form.on("CMS", {
           "</span>" +
           "<br><b>Reason :- <b>" +
           stage_2_emp_remark,
-        "red"
+        "red",
       );
     }
   },
@@ -372,7 +368,7 @@ frappe.ui.form.on("CMS", {
           transaction_category.toLowerCase() +
           " request & select either '<b>Approve</b>' or '<b>Reject</b>'." +
           "</span>",
-        "orange"
+        "orange",
       );
 
       frm.disable_save();
@@ -386,7 +382,7 @@ frappe.ui.form.on("CMS", {
           transaction_category.toLowerCase() +
           " request successfully." +
           "</span>",
-        "green"
+        "green",
       );
     } else if (frm.doc.stage_2_emp_status == "Rejected") {
       frm.set_intro(
@@ -399,7 +395,7 @@ frappe.ui.form.on("CMS", {
           "</span>" +
           "<br><b>Reason :- <b>" +
           stage_2_emp_remark,
-        "red"
+        "red",
       );
     }
   },
@@ -434,7 +430,7 @@ frappe.ui.form.on("CMS", {
               fieldname: "approved_movement_charges", // Input for approved charges
               fieldtype: "Data",
               reqd: 1, // Make it mandatory
-            }
+            },
           );
         }
 
@@ -473,7 +469,7 @@ frappe.ui.form.on("CMS", {
             if (approvedMovementCharges) {
               frm.set_value(
                 "approved_movement_charges",
-                approvedMovementCharges
+                approvedMovementCharges,
               ); // Save input to doc
             }
 
@@ -485,7 +481,7 @@ frappe.ui.form.on("CMS", {
                 message: __("Form is Successfully Approved"),
                 indicator: "green",
               },
-              8
+              8,
             );
             // preserve_child_tables(frm);
 
@@ -527,7 +523,7 @@ frappe.ui.form.on("CMS", {
           frm.set_value("stage_2_emp_status", "Rejected");
           frm.set_value(
             "stage_2_emp_remark",
-            d.fields_dict.stage_2_emp_remark.get_value() // Corrected reference
+            d.fields_dict.stage_2_emp_remark.get_value(), // Corrected reference
           );
           d.hide();
           frm.set_value("status", "Rejected");
@@ -577,7 +573,7 @@ frappe.ui.form.on("CMS", {
             frm.set_value("stage_2_emp_status", "Pending");
             frm.set_value(
               "stage_1_emp_remark",
-              approvalDialog.fields_dict.stage_1_emp_remark.get_value()
+              approvalDialog.fields_dict.stage_1_emp_remark.get_value(),
             );
             approvalDialog.hide();
 
@@ -587,7 +583,7 @@ frappe.ui.form.on("CMS", {
                 message: __("Form is Successfully Approved"),
                 indicator: "green",
               },
-              8
+              8,
             );
 
             // Save the form
@@ -629,7 +625,7 @@ frappe.ui.form.on("CMS", {
           frm.set_value("stage_1_emp_status", "Rejected");
           frm.set_value(
             "stage_1_emp_remark",
-            d.fields_dict.stage_1_emp_remark.get_value()
+            d.fields_dict.stage_1_emp_remark.get_value(),
           );
           d.hide();
           frm.set_value("status", "Rejected");
@@ -655,7 +651,7 @@ frappe.ui.form.on("CMS", {
     if (frm.doc.stage_1_emp_status == "Pending") {
       frm.set_intro(
         "Please verify this request & select either '<b>Approve</b>' or '<b>Reject</b>'.",
-        "red"
+        "red",
       );
     } else if (frm.doc.stage_1_emp_status == "Approved") {
       frm.set_intro(
@@ -667,7 +663,7 @@ frappe.ui.form.on("CMS", {
           transaction_category.toLowerCase() +
           " request successfully." +
           "</span>",
-        "green"
+        "green",
       );
     } else if (frm.doc.stage_1_emp_status == "Rejected") {
       console.log("reject coms");
@@ -682,7 +678,7 @@ frappe.ui.form.on("CMS", {
           "</span>" +
           "<br><b>Reason :- <b>" +
           stage_1_emp_remark,
-        "red"
+        "red",
       );
     }
   },
@@ -737,7 +733,7 @@ frappe.ui.form.on("CMS", {
                     message: __("Form submitted successfully"),
                     indicator: "green",
                   },
-                  8
+                  8,
                 );
                 // preserve_child_tables(frm);
 
@@ -1204,7 +1200,7 @@ frappe.ui.form.on("CMS", {
         const { message } = await frappe.db.get_value(
           "Employee",
           eid,
-          "branch"
+          "branch",
         );
         const branch = message ? message.branch : null;
 
@@ -1305,43 +1301,43 @@ frappe.ui.form.on("CMS", {
                         <div>
                           <span class="mylabel">Custodian 1 Name</span>
                           <p id="employee_name">${escapeHtml(
-                            employeeData.employee_name || ""
+                            employeeData.employee_name || "",
                           )}</p>
                           <span class="mylabel">Employee ID</span>
                           <p id="employee_id">${escapeHtml(
-                            frm.doc.custodian_1 || ""
+                            frm.doc.custodian_1 || "",
                           )}</p>
                           <span class="mylabel">Designation</span>
                           <p id="employee_designation">${escapeHtml(
-                            employeeData.designation || ""
+                            employeeData.designation || "",
                           )}</p><hr>
                         </div>
                         <div>
                           <span class="mylabel">Phone</span>
                           <p id="employee_phone">${escapeHtml(
-                            employeeData.cell_number || ""
+                            employeeData.cell_number || "",
                           )}</p>
                           <span class="mylabel">Region</span>
                           <p id="employee_region">${escapeHtml(
-                            employeeData.custom_region || ""
+                            employeeData.custom_region || "",
                           )}</p>
                           <span class="mylabel">Division</span>
                           <p id="employee_division">${escapeHtml(
-                            employeeData.custom_division || ""
+                            employeeData.custom_division || "",
                           )}</p><hr>
                         </div>
                         <div>
                           <span class="mylabel">District</span>
                           <p id="employee_district">${escapeHtml(
-                            employeeData.custom_district || ""
+                            employeeData.custom_district || "",
                           )}</p>
                           <span class="mylabel">Branch</span>
                           <p id="employee_branch">${escapeHtml(
-                            employeeData.branch || ""
+                            employeeData.branch || "",
                           )}</p>
                           <span class="mylabel">Department</span>
                           <p id="employee_department">${escapeHtml(
-                            employeeData.department || ""
+                            employeeData.department || "",
                           )}</p><hr>
                         </div>
                       </div>
@@ -1401,43 +1397,43 @@ frappe.ui.form.on("CMS", {
                         <div>
                           <span class="mylabel">Custodian 2 Name</span>
                           <p id="employee_name">${escapeHtml(
-                            employeeData.employee_name || ""
+                            employeeData.employee_name || "",
                           )}</p>
                           <span class="mylabel">Employee ID</span>
                           <p id="employee_id">${escapeHtml(
-                            frm.doc.custodian_2 || ""
+                            frm.doc.custodian_2 || "",
                           )}</p>
                           <span class="mylabel">Designation</span>
                           <p id="employee_designation">${escapeHtml(
-                            employeeData.designation || ""
+                            employeeData.designation || "",
                           )}</p><hr>
                         </div>
                         <div>
                           <span class="mylabel">Phone</span>
                           <p id="employee_phone">${escapeHtml(
-                            employeeData.cell_number || ""
+                            employeeData.cell_number || "",
                           )}</p>
                           <span class="mylabel">Region</span>
                           <p id="employee_region">${escapeHtml(
-                            employeeData.custom_region || ""
+                            employeeData.custom_region || "",
                           )}</p>
                           <span class="mylabel">Division</span>
                           <p id="employee_division">${escapeHtml(
-                            employeeData.custom_division || ""
+                            employeeData.custom_division || "",
                           )}</p><hr>
                         </div>
                         <div>
                           <span class="mylabel">District</span>
                           <p id="employee_district">${escapeHtml(
-                            employeeData.custom_district || ""
+                            employeeData.custom_district || "",
                           )}</p>
                           <span class="mylabel">Branch</span>
                           <p id="employee_branch">${escapeHtml(
-                            employeeData.branch || ""
+                            employeeData.branch || "",
                           )}</p>
                           <span class="mylabel">Department</span>
                           <p id="employee_department">${escapeHtml(
-                            employeeData.department || ""
+                            employeeData.department || "",
                           )}</p><hr>
                         </div>
                       </div>
@@ -1570,7 +1566,7 @@ frappe.ui.form.on("CMS", {
         ) {
           event.preventDefault(); // Prevent any other keys from being entered
         }
-      }
+      },
     );
     frm.fields_dict["approved_movement_charges"].$input.on(
       "keydown",
@@ -1592,7 +1588,7 @@ frappe.ui.form.on("CMS", {
         ) {
           event.preventDefault(); // Prevent any other keys from being entered
         }
-      }
+      },
     );
 
     frm.fields_dict["branch_distance_km"].$input.on(
@@ -1615,7 +1611,7 @@ frappe.ui.form.on("CMS", {
         ) {
           event.preventDefault(); // Prevent any other keys from being entered
         }
-      }
+      },
     );
   },
 
@@ -1675,13 +1671,14 @@ function send_cit_ack(frm) {
     },
     freeze: true,
     callback: function (r) {
-      if (!r.exc) {
+      if (r.message?.status === "success") {
         frappe.show_alert(
           {
-            message: __("CIT Acknowledgement sent successfully"),
+            message:
+              __("CIT ACK sent to: ") + r.message.recipient_names.join(", "),
             indicator: "green",
           },
-          6
+          8,
         );
         frm.reload_doc();
       }

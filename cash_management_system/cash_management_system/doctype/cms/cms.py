@@ -608,7 +608,139 @@ def send_pending_approval_emails():
             f"CMS Pending Summary Sent | {level} | {email} | {len(requests)}"
         )
 
+import frappe
+from frappe.utils import now_datetime
 
+
+
+@frappe.whitelist()
+def send_cit_ack(cms_name):
+    # ---------------------------------
+    # 0. Load CMS document
+    # ---------------------------------
+    doc = frappe.get_doc("CMS", cms_name)
+
+    # ---------------------------------
+    # 1. Mandatory validations
+    # ---------------------------------
+    if doc.transaction_category != "CIT":
+        frappe.throw(
+            "CIT acknowledgement is allowed only for CIT transactions."
+        )
+
+    if doc.stage_2_emp_status != "Approved":
+        frappe.throw(
+            "CIT acknowledgement is allowed only after final approval."
+        )
+
+    if doc.get("acknowledged"):
+        frappe.throw(
+            "CIT cash has already been acknowledged."
+        )
+
+    if not doc.requested_branch:
+        frappe.throw(
+            "Requested Branch is mandatory."
+        )
+
+    # ---------------------------------
+    # 2. Get COM Approver users
+    # ---------------------------------
+    com_users = frappe.get_all(
+        "CMS User",
+        filters={"com_approver": 1},
+        fields=["user"]
+    )
+
+    if not com_users:
+        frappe.throw(
+            "No COM Approver configured in CMS User."
+        )
+
+    com_user_ids = [u.user for u in com_users if u.user]
+
+    # ---------------------------------
+    # 3. Get Employees
+    #    (Requested Branch + COM Approver)
+    # ---------------------------------
+    employees = frappe.get_all(
+        "Employee",
+        filters={
+            "user_id": ["in", com_user_ids],
+            "branch": doc.requested_branch,
+            "status": "Active"
+        },
+        fields=["name", "employee_name", "company_email"]
+    )
+
+    if not employees:
+        frappe.throw(
+            f"No COM Approver employee found for branch {doc.requested_branch}."
+        )
+
+    # ---------------------------------
+    # 4. Collect email recipients
+    # ---------------------------------
+    recipients = list(
+        {
+            emp.company_email.strip().lower()
+            for emp in employees
+            if emp.company_email
+        }
+    )
+
+    recipient_names = list(
+        {
+            emp.employee_name or emp.name
+            for emp in employees
+            if emp.company_email
+        }
+    )
+
+    if not recipients:
+        frappe.throw(
+            f"COM Approver found for branch {doc.requested_branch}, "
+            "but company email is not configured."
+        )
+
+    # ---------------------------------
+    # 5. Update ACK details
+    # ---------------------------------
+    # Save first so `modified` becomes ACK time
+    doc.acknowledged = 1
+    doc.cit_ack_by = frappe.session.user
+    doc.save(ignore_permissions=True)
+
+    ack_time = doc.modified  # ✅ use record modified time
+
+    # ---------------------------------
+    # 6. Send ACK email
+    # ---------------------------------
+    frappe.sendmail(
+        recipients=recipients,
+        subject=f"CIT Cash Reached – {doc.name}",
+        message=f"""
+        <p><b>CIT Cash Acknowledgement</b></p>
+        <p>The CIT cash has been successfully received.</p>
+
+        <p><b>CMS No:</b> {doc.name}</p>
+        <p><b>Requested Branch:</b> {doc.requested_branch}</p>
+        <p><b>Amount:</b> ₹ {doc.amount}</p>
+        <p><b>Acknowledged On:</b> {ack_time}</p>
+        <p><b>Acknowledged By:</b> {frappe.session.user}</p>
+        """,
+        delayed=False  # ensures it is queued immediately
+    )
+
+    # ---------------------------------
+    # 7. Return response for UI
+    # ---------------------------------
+    return {
+        "status": "success",
+        "recipients": recipients,
+        "recipient_names": recipient_names,
+        "ack_time": ack_time
+    }
 @frappe.whitelist()
 def generate_dynamic_pdf(name):
     try:
