@@ -19,6 +19,7 @@
   "column_break_836lq",
   "date_of_request",
   "requested_branch",
+  "acknowledged",
   "column_break_wsdrj",
   "date_of_transaction",
   "transaction_type",
@@ -362,11 +363,18 @@
    "label": "Vehicle  Type",
    "mandatory_depends_on": "eval:doc.transaction_category === \"CIT\"\n",
    "options": "\n2 wheeler\n4 wheeler"
+  },
+  {
+   "default": "0",
+   "fieldname": "acknowledged",
+   "fieldtype": "Check",
+   "label": "Acknowledged",
+   "read_only_depends_on": "eval:frappe.session.user !== \"Administrator\"\n"
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-01-17 14:21:40.459233",
+ "modified": "2026-01-19 11:21:43.701995",
  "modified_by": "Administrator",
  "module": "Cash Management System",
  "name": "CMS",
