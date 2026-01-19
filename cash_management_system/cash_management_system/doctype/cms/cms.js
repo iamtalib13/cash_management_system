@@ -1698,7 +1698,7 @@ function apply_page_access_control(frm) {
   const roles = frappe.user_roles || [];
   const designation = frm._user_designation || "";
 
-  const isBranchManager = roles.includes("Branch Manager");
+  const isBranchManager = roles.includes("Branch User");
 
   const isSpecialDesignation =
     designation === "REGIONAL OPERATION MANAGER" ||

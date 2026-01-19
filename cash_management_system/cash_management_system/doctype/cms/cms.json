@@ -366,6 +366,7 @@
   },
   {
    "default": "0",
+   "depends_on": "eval:doc.status === \"Approved\"\n",
    "fieldname": "acknowledged",
    "fieldtype": "Check",
    "label": "Acknowledged",
@@ -374,7 +375,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-01-19 11:21:43.701995",
+ "modified": "2026-01-19 16:55:36.649624",
  "modified_by": "Administrator",
  "module": "Cash Management System",
  "name": "CMS",
