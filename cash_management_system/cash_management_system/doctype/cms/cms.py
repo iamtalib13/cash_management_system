@@ -712,6 +712,12 @@ def send_cit_ack(cms_name):
     doc.save(ignore_permissions=True)
 
     ack_time = doc.modified  # ✅ use record modified time
+    employee_name = frappe.db.get_value(
+    "Employee",
+    {"user_id": frappe.session.user},
+    "employee_name"
+) or frappe.session.user
+    record_url = get_url_to_form(doc.doctype, doc.name)
 
     # ---------------------------------
     # 6. Send ACK email
@@ -720,17 +726,129 @@ def send_cit_ack(cms_name):
         recipients=recipients,
         subject=f"CIT Cash Reached – {doc.name}",
         message=f"""
-        <p><b>CIT Cash Acknowledgement</b></p>
-        <p>The CIT cash has been successfully received.</p>
+    <div style="
+        max-width:600px;
+        margin:0 auto;
+        background:#ffffff;
+        border:1px solid #e5e7eb;
+        border-radius:8px;
+        font-family:Arial, Helvetica, sans-serif;
+        color:#1f2937;
+        box-shadow:0 1px 3px rgba(0,0,0,0.05);
+    ">
 
-        <p><b>CMS No:</b> {doc.name}</p>
-        <p><b>Requested Branch:</b> {doc.requested_branch}</p>
-        <p><b>Amount:</b> ₹ {doc.amount}</p>
-        <p><b>Acknowledged On:</b> {ack_time}</p>
-        <p><b>Acknowledged By:</b> {frappe.session.user}</p>
-        """,
-        delayed=False  # ensures it is queued immediately
+        <!-- Header -->
+        <div style="
+            background:linear-gradient(135deg, #0f766e 0%, #14b8a6 100%);
+            color:#ffffff;
+            padding:16px 20px;
+            font-size:18px;
+            font-weight:bold;
+            border-radius:8px 8px 0 0;
+            text-align:center;
+            letter-spacing:0.5px;
+        ">
+            ✅ CIT Cash Acknowledgement
+        </div>
+
+        <!-- Body -->
+        <div style="padding:20px; font-size:14px; line-height:1.6;">
+
+            <div style="
+                background:#f0fdfa;
+                border:1px solid #ccfbf1;
+                border-radius:6px;
+                padding:12px 16px;
+                margin-bottom:20px;
+                text-align:center;
+            ">
+                <p style="margin:0; font-size:15px; font-weight:600; color:#0f766e;">
+                    The CIT cash has been <span style="color:#059669;">successfully received</span>
+                </p>
+            </div>
+
+            <div style="
+                background:#f9fafb;
+                border-radius:6px;
+                padding:16px;
+                margin-bottom:20px;
+            ">
+                <table style="width:100%; border-collapse:collapse;">
+                    <tr>
+                        <td style="padding:8px 0; width:40%; font-weight:600; color:#4b5563;">CMS No:</td>
+                    <td style="padding:8px 0;">
+                        <a href="{record_url}" 
+                           target="_blank"
+                           style="
+                               color:#0f766e;
+                               font-weight:600;
+                               text-decoration:none;
+                               background:#ecfdf5;
+                               padding:4px 12px;
+                               border-radius:4px;
+                               border:1px solid #a7f3d0;
+                               display:inline-block;
+                           "
+                           onmouseover="this.style.backgroundColor='#d1fae5'; this.style.textDecoration='underline';"
+                           onmouseout="this.style.backgroundColor='#ecfdf5'; this.style.textDecoration='none';">
+                            {doc.name}
+                        </a>
+                    </td>
+                </tr>
+                    <tr>
+                        <td style="padding:8px 0; font-weight:600; color:#4b5563;">Requested Branch:</td>
+                        <td style="padding:8px 0;">{doc.requested_branch}</td>
+                    </tr>
+                    <tr>
+                        <td style="padding:8px 0; font-weight:600; color:#4b5563;">Amount:</td>
+                        <td style="padding:8px 0; color:#dc2626; font-weight:600; font-size:15px;">₹ {doc.amount}</td>
+                    </tr>
+                    <tr>
+                        <td style="padding:8px 0; font-weight:600; color:#4b5563;">Acknowledged On:</td>
+                        <td style="padding:8px 0;">{ack_time}</td>
+                    </tr>
+                    <tr>
+                        <td style="padding:8px 0; font-weight:600; color:#4b5563;">Acknowledged By:</td>{employee_name}
+                        <td style="padding:8px 0; color:#0f766e;">({frappe.session.user})</td>
+                    </tr>
+                </table>
+            </div>
+
+            <div style="
+                background:#fef3c7;
+                border-left:4px solid #f59e0b;
+                padding:12px 16px;
+                margin-top:16px;
+                font-size:13px;
+                color:#92400e;
+                border-radius:0 4px 4px 0;
+            ">
+                <strong>Note:</strong> Please verify the cash received matches the amount mentioned above.
+            </div>
+
+        </div>
+
+        <!-- Footer -->
+        <div style="
+            background:#f9fafb;
+            padding:14px 20px;
+            font-size:12px;
+            color:#6b7280;
+            border-top:1px solid #e5e7eb;
+            border-radius:0 0 8px 8px;
+            text-align:center;
+        ">
+            <p style="margin:0 0 4px 0;">
+               Please do not reply to this email
+            </p>
+        </div>
+
+    </div>
+    """,
+        delayed=False
     )
+
+
 
     # ---------------------------------
     # 7. Return response for UI
@@ -741,6 +859,8 @@ def send_cit_ack(cms_name):
         "recipient_names": recipient_names,
         "ack_time": ack_time
     }
+
+
 @frappe.whitelist()
 def generate_dynamic_pdf(name):
     try:
