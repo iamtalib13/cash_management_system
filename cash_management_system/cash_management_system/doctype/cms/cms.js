@@ -728,6 +728,9 @@ frappe.ui.form.on("CMS", {
               .get_value("Employee", { user_id: com_user }, "name")
               .then((emp) => {
                 if (!emp.message?.name) {
+                  // we finde the com approver based on the branch
+                  // of the requester
+                  // if the cms user com approver branch is == requesters branch then that is the com approver
                   frappe.msgprint("Employee not found for COM Approver");
                   return;
                 }
@@ -1652,25 +1655,25 @@ function preserve_child_tables(frm) {
     }
   });
 }
-function toggle_cheque_number(frm) {
-  const is_deposit = frm.doc.transaction_category === "DEPOSIT";
+// function toggle_cheque_number(frm) {
+//   const is_deposit = frm.doc.transaction_category === "DEPOSIT";
 
-  // Access child table grid
-  const grid = frm.get_field("cheque_details").grid;
+//   // Access child table grid
+//   const grid = frm.get_field("cheque_details").grid;
 
-  if (!grid) return;
+//   if (!grid) return;
 
-  // Hide / show column
-  grid.toggle_display("cheque_number", !is_deposit);
+//   // Hide / show column
+//   grid.toggle_display("cheque_number", !is_deposit);
 
-  // Optional but recommended: clear existing values
-  if (is_deposit) {
-    (frm.doc.cheque_details || []).forEach((row) => {
-      row.cheque_number = null;
-    });
-    frm.refresh_field("cheque_details");
-  }
-}
+//   // Optional but recommended: clear existing values
+//   if (is_deposit) {
+//     (frm.doc.cheque_details || []).forEach((row) => {
+//       row.cheque_number = null;
+//     });
+//     frm.refresh_field("cheque_details");
+//   }
+// }
 function send_cit_ack(frm) {
   frappe.call({
     method:
