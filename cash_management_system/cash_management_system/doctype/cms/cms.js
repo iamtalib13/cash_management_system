@@ -1212,7 +1212,7 @@ frappe.ui.form.on("CMS", {
         const { message } = await frappe.db.get_value(
           "Employee",
           eid,
-          "branch",
+          "sol_id",
         );
         const branch = message ? message.branch : null;
 
