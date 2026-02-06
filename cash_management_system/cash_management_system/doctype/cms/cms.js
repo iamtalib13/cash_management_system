@@ -7,7 +7,7 @@ frappe.ui.form.on("CMS", {
     frm.set_query("bank_name", "cheque_details", function (doc, cdt, cdn) {
       return {
         filters: {
-          branch: frm.doc.branch,
+          branch: frm.doc.sol_id, // Assuming sol_id is the field in CMS that links to Employee's branch
         },
       };
     });
@@ -1209,10 +1209,13 @@ frappe.ui.form.on("CMS", {
       const r = await frappe.db.get_value(
         "Employee",
         { user_id: user }, // ← match by logged-in user
-        ["branch"],
+        ["branch", "sol_id"], // ← fetch the branch field,
       );
 
       const branch = r.message ? r.message.branch : null;
+      const sol_id = r.message ? r.message.sol_id : null;
+      // console.log("Employee Branch:", branch);
+      // console.log("Employee Sol ID:", sol_id);
 
       if (branch) {
         frm.set_value("branch", branch);
