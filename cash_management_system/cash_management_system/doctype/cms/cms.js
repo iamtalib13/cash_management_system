@@ -174,7 +174,10 @@ frappe.ui.form.on("CMS", {
         else if (
           role === "COM-Approver" ||
           frm._user_designation === "REGIONAL OPERATION MANAGER" ||
-          frm._user_designation === "ZONAL MANAGER"
+          frm._user_designation === "ZONAL MANAGER" ||
+          frm._user_designation === "BRANCH MANAGER" ||
+          frm._user_designation === "BRANCH OPERATION MANAGER" ||
+          frm._user_designation === "BRANCH OFFICER"
         ) {
           frm.disable_save(); // only save, NOT form
           frm.trigger("com_read_only");
@@ -1701,7 +1704,10 @@ function apply_page_access_control(frm) {
 
   const isSpecialDesignation =
     designation === "REGIONAL OPERATION MANAGER" ||
-    designation === "ZONAL MANAGER";
+    designation === "ZONAL MANAGER" ||
+    designation === "BRANCH MANAGER" ||
+    designation === "BRANCH OPERATION MANAGER" ||
+    designation === "BRANCH OFFICER";
 
   // ✅ Allowed users → DO NOTHING
   if (isBranchManager || isSpecialDesignation) {
