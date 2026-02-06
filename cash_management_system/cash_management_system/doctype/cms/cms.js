@@ -1714,10 +1714,10 @@ function apply_page_access_control(frm) {
   frm.page.clear_primary_action();
   frm.page.clear_secondary_action();
   frm.page.main.empty();
-
+  // you need Branch User roles
   frm.page.main.html(`
     <div style="padding:40px;text-align:center;color:#888;font-size:16px;">
-      You are not authorized to view this page.
+     You are not authorized to view this page; please contact your administrator.
     </div>
   `);
 }
