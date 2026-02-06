@@ -1204,30 +1204,23 @@ frappe.ui.form.on("CMS", {
 
   set_branch: async function (frm) {
     const user = frappe.session.user;
-    const eid = user.match(/\d+/)[0];
 
-    if (eid) {
-      try {
-        // Use async/await for cleaner asynchronous code
-        const { message } = await frappe.db.get_value(
-          "Employee",
-          eid,
-          "sol_id",
-        );
-        const branch = message ? message.branch : null;
+    try {
+      const r = await frappe.db.get_value(
+        "Employee",
+        { user_id: user }, // ← match by logged-in user
+        ["branch"],
+      );
 
-        if (branch) {
-          // Set the branch value on the form
-          frm.set_value("branch", branch);
-          // console.log(branch);
-        } else {
-          console.error("Branch not found for the employee.");
-        }
-      } catch (error) {
-        console.error("Error retrieving branch:", error);
+      const branch = r.message ? r.message.branch : null;
+
+      if (branch) {
+        frm.set_value("branch", branch);
+      } else {
+        console.log("Branch not found for logged-in employee.");
       }
-    } else {
-      console.error("Employee ID not found in the user session.");
+    } catch (error) {
+      console.error("Error retrieving branch:", error);
     }
   },
 
@@ -1655,25 +1648,25 @@ function preserve_child_tables(frm) {
     }
   });
 }
-// function toggle_cheque_number(frm) {
-//   const is_deposit = frm.doc.transaction_category === "DEPOSIT";
+function toggle_cheque_number(frm) {
+  const is_deposit = frm.doc.transaction_category === "DEPOSIT";
 
-//   // Access child table grid
-//   const grid = frm.get_field("cheque_details").grid;
+  // Access child table grid
+  const grid = frm.get_field("cheque_details").grid;
 
-//   if (!grid) return;
+  if (!grid) return;
 
-//   // Hide / show column
-//   grid.toggle_display("cheque_number", !is_deposit);
+  // Hide / show column
+  grid.toggle_display("cheque_number", !is_deposit);
 
-//   // Optional but recommended: clear existing values
-//   if (is_deposit) {
-//     (frm.doc.cheque_details || []).forEach((row) => {
-//       row.cheque_number = null;
-//     });
-//     frm.refresh_field("cheque_details");
-//   }
-// }
+  // Optional but recommended: clear existing values
+  if (is_deposit) {
+    (frm.doc.cheque_details || []).forEach((row) => {
+      row.cheque_number = null;
+    });
+    frm.refresh_field("cheque_details");
+  }
+}
 function send_cit_ack(frm) {
   frappe.call({
     method:
