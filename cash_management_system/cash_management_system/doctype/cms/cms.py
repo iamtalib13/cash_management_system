@@ -112,8 +112,6 @@ class CMS(Document):
 
         # Set the stage_1_emp_user field using the get_com method
          
-
-
     def check_transaction_date(self):
         # Today's date
         current_date = getdate(nowdate())
@@ -976,6 +974,7 @@ def get_employees_by_branch(doctype, txt, searchfield, start, page_len, filters)
     result = [(emp['name'], emp['employee_name']) for emp in employees]
 
     return result
+
 @frappe.whitelist()
 def ping():
     return "pong....reply aa gya"
