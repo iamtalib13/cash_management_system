@@ -27,8 +27,9 @@ frappe.ui.form.on("CMS", {
           .trim();
         console.log("User Designation:", frm._user_designation);
 
-        // ✅ run access check ONLY after designation is available
+        // ✅ run access check and role validation ONLY after designation is available
         apply_page_access_control(frm);
+        frm.trigger("role_validation");
       },
     });
     frm.set_query("bank_name", "cheque_details", function (doc, cdt, cdn) {
@@ -50,7 +51,9 @@ frappe.ui.form.on("CMS", {
     frm.trigger("transaction_type");
 
     // frm.trigger("home_button");
-    frm.trigger("role_validation");
+    if (frm._user_designation) {
+      frm.trigger("role_validation");
+    }
     frm.trigger("role_check");
     frm.trigger("section_colors");
     $("span.sidebar-toggle-btn").hide();
