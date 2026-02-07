@@ -1230,7 +1230,6 @@ frappe.ui.form.on("CMS", {
       ]);
       if (r.message) {
         frm.set_value("branch", r.message.branch);
-        // frm.set_value("sol_id", r.message.sol_id); // Set dynamically for the session
       }
     } catch {
       console.log("Error fetching employee branch");
