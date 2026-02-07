@@ -16,6 +16,11 @@ frappe.listview_settings["CMS"] = {
   onload(listview) {
     const user = frappe.session.user;
 
+    // ✅ Bypass for Administrator
+    if (user === "Administrator") {
+      return;
+    }
+
     frappe.db
       .get_value("Employee", { user_id: user }, "designation")
       .then((r) => {
@@ -35,6 +40,15 @@ frappe.listview_settings["CMS"] = {
           "BRANCH MANAGER",
           "BRANCH OPERATION MANAGER",
           "BRANCH OFFICER",
+          "REGIONAL OPERATION MANAGER",
+          "BRANCH OFFICER",
+          "Branch Operation Manager",
+          "Customer Service Officer",
+          "Customer Service Manager",
+          "CLUSTER OPERATION MANAGER",
+          "Regional Operation Manager",
+          "ASST. ZONAL MANAGER",
+          "ZONAL MANAGER",
         ];
 
         // ❌ Not allowed → blank page

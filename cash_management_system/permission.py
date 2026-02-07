@@ -44,7 +44,7 @@ def cms_permission_query(user):
     designation = (employee.designation or "").upper()
 
     # -------------------------------------------------
-    # 5. Region-level roles
+    # 5. Region-level roles SHOW THE RECORDS WHERE REGION MATCHES
     # -------------------------------------------------
     region_designations = {
         "ZONAL MANAGER",

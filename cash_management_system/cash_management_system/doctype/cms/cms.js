@@ -4,6 +4,7 @@ frappe.ui.form.on("CMS", {
     // if (frm.is_new()) {
     //   window.location.reload(); // Refreshes the page
     // }
+
     frm.set_query("bank_name", "cheque_details", function (doc, cdt, cdn) {
       return {
         filters: {
@@ -29,6 +30,13 @@ frappe.ui.form.on("CMS", {
         // ✅ run access check ONLY after designation is available
         apply_page_access_control(frm);
       },
+    });
+    frm.set_query("bank_name", "cheque_details", function (doc, cdt, cdn) {
+      return {
+        filters: {
+          branch: frm.doc.sol_id, // This now has the correct value
+        },
+      };
     });
   },
   validate: function (frm) {
@@ -127,105 +135,110 @@ frappe.ui.form.on("CMS", {
       return;
     }
 
-    frappe.db
-      .get_value("CMS User", user, ["requester", "com_approver", "ho_approver"])
-      .then((res) => {
-        if (!res.message) return;
+    const requesterDesignations = [
+      "ASST. BRANCH MANAGER",
+      "BRANCH OFFICER",
+      "BRANCH MANAGER",
+      "BRANCH OPERATION MANAGER",
+      "CUSTOMER SERVICE OFFICER",
+      "CUSTOMER SERVICE MANAGER",
+    ];
 
-        const { requester, com_approver, ho_approver } = res.message;
+    const comDesignations = [
+      "CLUSTER OPERATION MANAGER",
+      "REGIONAL OPERATION MANAGER",
+      "ASST. ZONAL MANAGER",
+      "ZONAL MANAGER",
+    ];
 
-        // --------------------------------------------------
-        // RESOLVE ROLE
-        // --------------------------------------------------
-        let role = null;
+    let role = null;
+    const userDesig = (frm._user_designation || "").toUpperCase().trim();
 
-        if (com_approver) role = "COM-Approver";
-        else if (ho_approver) role = "HO-Approver";
-        else if (requester) role = "Requester";
+    // 1. Check Designation for Requester
+    if (requesterDesignations.includes(userDesig)) {
+      role = "Requester";
+    }
+    // 2. Check Designation for COM Approver
+    else if (comDesignations.includes(userDesig)) {
+      role = "COM-Approver";
+    }
+    // 3. Hardcoded HO Approver by User ID
+    else if (user === "813@sahayog.com") {
+      role = "HO-Approver";
+    }
 
-        frm._cms_role = role;
-        console.log("CMS ROLE RESOLVED:", role);
+    frm._cms_role = role;
+    console.log("CMS ROLE RESOLVED:", role);
 
-        // --------------------------------------------------
-        // REQUESTER
-        // --------------------------------------------------
-        if (role === "Requester") {
-          // ✅ Show Submit ONLY when status is Draft
-          if (frm.doc.status === "Draft") {
-            frm.trigger("creator_submit_btn");
-          } else {
-            // ❌ Hide Submit in all other states
-            frm.remove_custom_button("Submit");
-            frm.disable_save();
-          }
+    // --------------------------------------------------
+    // REQUESTER
+    // --------------------------------------------------
+    if (role === "Requester") {
+      // ✅ Show Submit ONLY when status is Draft
+      if (frm.doc.status === "Draft") {
+        frm.trigger("creator_submit_btn");
+      } else {
+        // ❌ Hide Submit in all other states
+        frm.remove_custom_button("Submit");
+        frm.disable_save();
+      }
 
-          if (frm.doc.status === "Approved") {
-            frm.trigger("requester_intro");
-            frm.trigger("upload_attach");
-          }
+      if (frm.doc.status === "Approved") {
+        frm.trigger("requester_intro");
+        frm.trigger("upload_attach");
+      }
 
-          frm.trigger("creator_show_intro");
-          frm.set_df_property("approved_movement_charges", "read_only", 1);
-        }
+      frm.trigger("creator_show_intro");
+      frm.set_df_property("approved_movement_charges", "read_only", 1);
+    }
 
-        // --------------------------------------------------
-        // COM APPROVER ✅
-        // --------------------------------------------------
-        else if (
-          role === "COM-Approver" ||
-          frm._user_designation === "REGIONAL OPERATION MANAGER" ||
-          frm._user_designation === "ZONAL MANAGER" ||
-          frm._user_designation === "BRANCH MANAGER" ||
-          frm._user_designation === "BRANCH OPERATION MANAGER" ||
-          frm._user_designation === "BRANCH OFFICER"
-        ) {
-          frm.disable_save(); // only save, NOT form
-          frm.trigger("com_read_only");
-          frm.trigger("com_show_intro");
+    // --------------------------------------------------
+    // COM APPROVER ✅
+    // --------------------------------------------------
+    else if (role === "COM-Approver") {
+      frm.disable_save(); // only save, NOT form
+      frm.trigger("com_read_only");
+      frm.trigger("com_show_intro");
 
-          if (
-            frm.doc.stage_1_emp_status === "Pending" ||
-            frm.doc.stage_1_emp_status === "Rejected"
-          ) {
-            frm.trigger("com_buttons");
-          }
-        }
+      if (
+        frm.doc.stage_1_emp_status === "Pending" ||
+        frm.doc.stage_1_emp_status === "Rejected"
+      ) {
+        frm.trigger("com_buttons");
+      }
+    }
 
-        // --------------------------------------------------
-        // HO APPROVER
-        // --------------------------------------------------
-        else if (role === "HO-Approver") {
-          frm.disable_save();
-          frm.trigger("ho_read_only");
-          frm.trigger("ho_show_intro");
+    // --------------------------------------------------
+    // HO APPROVER
+    // --------------------------------------------------
+    else if (role === "HO-Approver") {
+      frm.disable_save();
+      frm.trigger("ho_read_only");
+      frm.trigger("ho_show_intro");
 
-          if (
-            frm.doc.stage_2_emp_status === "Pending" ||
-            frm.doc.stage_2_emp_status === "Rejected"
-          ) {
-            frm.trigger("ho_buttons");
-            frm.trigger("ho_intro");
-          }
-        }
+      if (
+        frm.doc.stage_2_emp_status === "Pending" ||
+        frm.doc.stage_2_emp_status === "Rejected"
+      ) {
+        frm.trigger("ho_buttons");
+        frm.trigger("ho_intro");
+      }
+    }
 
-        // --------------------------------------------------
-        // SYSTEM MANAGER
-        // --------------------------------------------------
-        else if (frappe.user.has_role("System Manager")) {
-          frm.enable_save();
-        }
+    // --------------------------------------------------
+    // SYSTEM MANAGER
+    // --------------------------------------------------
+    else if (frappe.user.has_role("System Manager")) {
+      frm.enable_save();
+    }
 
-        // --------------------------------------------------
-        // OTHERS
-        // --------------------------------------------------
-        else {
-          // frm.disable_form();
-          frm.disable_save();
-        }
-      })
-      .catch((err) => {
-        console.error("CMS role fetch failed:", err);
-      });
+    // --------------------------------------------------
+    // OTHERS
+    // --------------------------------------------------
+    else {
+      // frm.disable_form();
+      frm.disable_save();
+    }
   },
   upload_attach: function (frm) {
     // Add custom button
@@ -698,65 +711,62 @@ frappe.ui.form.on("CMS", {
     let transaction_category = frm.doc.transaction_category;
 
     frm.add_custom_button(__("Submit"), function () {
-      // Determine the confirmation message based on transaction_category value
-      let confirmation_message = "";
-      if (transaction_category === "DEPOSIT") {
-        confirmation_message =
-          "Are you sure you want to submit this DEPOSIT request?";
-      } else if (transaction_category === "WITHDRAWAL") {
-        confirmation_message =
-          "Are you sure you want to submit this WITHDRAWAL request?";
-      } else if (transaction_category === "CIT") {
-        confirmation_message =
-          "Are you sure you want to submit this CIT request?";
-      } else {
-        confirmation_message = "Are you sure you want to submit the form?";
+      // ✅ FIRST: frontend mandatory check
+      if (
+        !frm.doc.transaction_category ||
+        !frm.doc.date_of_transaction ||
+        !frm.doc.custodian_1 ||
+        !frm.doc.custodian_2
+      ) {
+        frappe.msgprint("Please fill all mandatory fields.");
+        return;
       }
 
-      // Show the confirmation dialog with the customized message
-      frappe.confirm(confirmation_message, function () {
-        // Fetch COM Approver (email)
-        frappe.db
-          .get_value("CMS User", { com_approver: 1 }, "user")
-          .then((r) => {
-            if (!r.message?.user) {
-              frappe.msgprint("COM Approver not configured");
-              return;
-            }
-
-            const com_user = r.message.user;
-
-            // Convert email → Employee ID
+      frappe.confirm("Are you sure you want to submit?", function () {
+        // 🔹 ONLY save first
+        frm
+          .save()
+          .then(() => {
+            // 🔹 AFTER successful save → fetch COM approver
             frappe.db
-              .get_value("Employee", { user_id: com_user }, "name")
-              .then((emp) => {
-                if (!emp.message?.name) {
-                  // we finde the com approver based on the branch
-                  // of the requester
-                  // if the cms user com approver branch is == requesters branch then that is the com approver
-                  frappe.msgprint("Employee not found for COM Approver");
+              .get_value("CMS User", { com_approver: 1 }, "user")
+              .then((r) => {
+                if (!r.message) {
+                  frappe.msgprint("COM Approver not configured");
                   return;
                 }
 
-                // ✅ ONLY THESE THREE FIELDS
-                frm.set_value("stage_1_emp_user", emp.message.name); // Employee ID
-                frm.set_value("stage_1_emp_status", "Pending");
-                frm.set_value("status", "Pending");
+                frappe.db
+                  .get_value("Employee", { user_id: r.message.user }, "name")
+                  .then((emp) => {
+                    if (!emp.message) {
+                      frappe.msgprint("Employee not found for COM Approver");
+                      return;
+                    }
 
-                frappe.show_alert(
-                  {
-                    message: __("Form submitted successfully"),
-                    indicator: "green",
-                  },
-                  8,
-                );
-                // preserve_child_tables(frm);
+                    // ✅ NOW update workflow fields
+                    frm.set_value("stage_1_emp_user", emp.message.name);
+                    frm.set_value("stage_1_emp_status", "Pending");
+                    frm.set_value("status", "Pending");
 
-                frm.save();
+                    frm.save().then(() => {
+                      frappe.show_alert(
+                        {
+                          message: "Form submitted successfully",
+                          indicator: "green",
+                        },
+                        8,
+                      );
+                    });
+                  });
               });
+          })
+          .catch(() => {
+            frappe.msgprint("Please fix validation errors.");
           });
       });
     });
+
     frm.change_custom_button_type("Submit", null, "success");
   },
   show_approval_tracker: function (frm) {
@@ -1131,17 +1141,25 @@ frappe.ui.form.on("CMS", {
     // Fetching Employee Data
     frm.call({
       method: "fetch_employee",
-      args: {
-        employee_id: eid,
-      },
+      args: { employee_id: eid },
       callback: function (r) {
-        if (!r.exc) {
+        // Bail out on RPC error
+        if (r.exc) {
+          console.error("fetch_employee error:", r.exc);
+          return;
+        }
+
+        if (r.message && r.message[0]) {
           const employeeData = r.message[0]; // Accessing the first element of the array
+          // set sol_id from the fetched data
+          frm.doc.sol_id = employeeData.sol_id;
+
           console.log("Employee Data:", employeeData);
 
           // Safeguard against potential HTML injection
           const escapeHtml = (unsafe) => {
-            return unsafe
+            return (unsafe || "")
+              .toString()
               .replace(/&/g, "&amp;")
               .replace(/</g, "&lt;")
               .replace(/>/g, "&gt;")
@@ -1149,54 +1167,54 @@ frappe.ui.form.on("CMS", {
               .replace(/'/g, "&#039;");
           };
 
-          // Directly set the response data in HTML with inline CSS
+          // Directly set the response data in HTML with inline CSS, using escaped values
           let html = `
-			  <style>
-				.myemployee-grid {
-				  display: grid;
-				  grid-template-columns: repeat(3, 1fr); /* Creates 3 equal columns */
-				  gap: 10px; /* Adds space between items */
-				}
-				.myemployee-grid p {
-				  border-radius: 5px;
-				  padding: 7px;
-				  margin: 5px;
-				  background: #f4f5f6;
-				}
-				.mylabel{
-				  margin:8px;
-				  font-size: var(--text-sm);
-				}
-			  </style>
-			  <div class="employee-details">
-				  <div class="myemployee-grid">
-					<div>
-					  <span class="mylabel">Employee Name</span>
-					  <p id="employee_name">${employeeData.employee_name || ""}</p>
-					  <span class="mylabel">Employee ID</span>
-					  <p id="employee_id">${eid}</p>
-					  <span class="mylabel">Designation</span>
-					  <p id="employee_designation">${employeeData.designation || ""}</p>
-					</div>
-					<div>
-					<span class="mylabel">Phone</span>
-					  <p id="employee_phone"> ${employeeData.cell_number || ""}</p>
-					  <span class="mylabel">Region</span>
-					  <p id="employee_region"> ${employeeData.custom_region || ""}</p>
-					  <span class="mylabel">Division</span>
-					  <p id="employee_division"> ${employeeData.custom_division || ""}</p>
-					</div>
-					<div>
-					<span class="mylabel">District</span>
-					  <p id="employee_district"> ${employeeData.custom_district || ""}</p>
-					  <span class="mylabel">Branch</span>
-					  <p id="employee_branch"> ${employeeData.branch || ""}</p>
-					  <span class="mylabel">Department</span>
-					  <p id="employee_department"> ${employeeData.department || ""}</p>
-					</div>
-				  </div>
-			  </div>
-		  `;
+        <style>
+        .myemployee-grid {
+          display: grid;
+          grid-template-columns: repeat(3, 1fr); /* Creates 3 equal columns */
+          gap: 10px; /* Adds space between items */
+        }
+        .myemployee-grid p {
+          border-radius: 5px;
+          padding: 7px;
+          margin: 5px;
+          background: #f4f5f6;
+        }
+        .mylabel{
+          margin:8px;
+          font-size: var(--text-sm);
+        }
+        </style>
+        <div class="employee-details">
+          <div class="myemployee-grid">
+          <div>
+            <span class="mylabel">Employee Name</span>
+            <p id="employee_name">${escapeHtml(employeeData.employee_name)}</p>
+            <span class="mylabel">Employee ID</span>
+            <p id="employee_id">${escapeHtml(eid)}</p>
+            <span class="mylabel">Designation</span>
+            <p id="employee_designation">${escapeHtml(employeeData.designation)}</p>
+          </div>
+          <div>
+          <span class="mylabel">Phone</span>
+            <p id="employee_phone">${escapeHtml(employeeData.cell_number)}</p>
+            <span class="mylabel">Region</span>
+            <p id="employee_region">${escapeHtml(employeeData.custom_region)}</p>
+            <span class="mylabel">Division</span>
+            <p id="employee_division">${escapeHtml(employeeData.custom_division)}</p>
+          </div>
+          <div>
+          <span class="mylabel">District</span>
+            <p id="employee_district">${escapeHtml(employeeData.custom_district)}</p>
+            <span class="mylabel">Branch</span>
+            <p id="employee_branch">${escapeHtml(employeeData.branch)}</p>
+            <span class="mylabel">Department</span>
+            <p id="employee_department">${escapeHtml(employeeData.department)}</p>
+          </div>
+          </div>
+        </div>
+      `;
 
           // Set the above `html` as Summary HTML
           frm.set_df_property("employee_html", "options", html);
@@ -1207,26 +1225,16 @@ frappe.ui.form.on("CMS", {
 
   set_branch: async function (frm) {
     const user = frappe.session.user;
-
     try {
-      const r = await frappe.db.get_value(
-        "Employee",
-        { user_id: user }, // ← match by logged-in user
-        ["branch", "sol_id"], // ← fetch the branch field,
-      );
-
-      const branch = r.message ? r.message.branch : null;
-      const sol_id = r.message ? r.message.sol_id : null;
-      // console.log("Employee Branch:", branch);
-      // console.log("Employee Sol ID:", sol_id);
-
-      if (branch) {
-        frm.set_value("branch", branch);
-      } else {
-        console.log("Branch not found for logged-in employee.");
+      const r = await frappe.db.get_value("Employee", { user_id: user }, [
+        "branch",
+        "sol_id",
+      ]);
+      if (r.message) {
+        frm.set_value("branch", r.message.branch);
       }
-    } catch (error) {
-      console.error("Error retrieving branch:", error);
+    } catch {
+      console.log("Error fetching employee branch");
     }
   },
 
@@ -1707,7 +1715,8 @@ function apply_page_access_control(frm) {
     designation === "ZONAL MANAGER" ||
     designation === "BRANCH MANAGER" ||
     designation === "BRANCH OPERATION MANAGER" ||
-    designation === "BRANCH OFFICER";
+    designation === "BRANCH OFFICER" ||
+    designation === "AGM";
 
   // ✅ Allowed users → DO NOTHING
   if (isBranchManager || isSpecialDesignation) {
