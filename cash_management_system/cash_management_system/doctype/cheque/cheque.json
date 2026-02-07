@@ -1,7 +1,7 @@
 {
  "actions": [],
  "allow_rename": 1,
- "autoname": "format:{cheque_number}",
+ "autoname": "v3.hash",
  "creation": "2024-10-17 11:07:00.737290",
  "doctype": "DocType",
  "editable_grid": 1,
@@ -19,8 +19,7 @@
    "fieldname": "cheque_number",
    "fieldtype": "Data",
    "in_list_view": 1,
-   "label": "Cheque Number",
-   "unique": 1
+   "label": "Cheque Number"
   },
   {
    "fieldname": "bank_name",
@@ -69,7 +68,7 @@
  "modified_by": "Administrator",
  "module": "Cash Management System",
  "name": "Cheque",
- "naming_rule": "Expression",
+ "naming_rule": "Random",
  "owner": "Administrator",
  "permissions": [],
  "row_format": "Dynamic",

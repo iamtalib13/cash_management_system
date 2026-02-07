@@ -20,37 +20,23 @@ from frappe.utils import get_url_to_form, escape_html
 from frappe.utils import nowdate, add_days, getdate
 
 class CMS(Document):
-    def check_cheque_details(self):
-            all_fields_non_empty = True  # Flag to track if all fields are non-empty
-
+    def check_cheque_details(self, mandatory=False):
             # Loop through each row in the cheque_details child table
             for row in self.cheque_details:
-                # Check if cheque_number and cheque_amount are non-empty
-                if not row.cheque_number or not row.cheque_amount:
-                    all_fields_non_empty = False  # Set flag to false if any field is empty
-
-            # Now you can take action based on the all_fields_non_empty flag
-            if not all_fields_non_empty:
-                # Raise a validation error if any field is empty
-                frappe.throw("Please ensure that ' Cheque Number ' and ' Cheque Amount ' are filled in all entries.")
-    def check_amount_details(self):
-            all_fields_non_empty = True  # Flag to track if all fields are non-empty
-
-            # Loop through each row in the cheque_details child table
-            for row in self.cheque_details:
-                # Check if cheque_number and cheque_amount are non-empty
+                # 1. Mandatory check for Amount (always required)
                 if not row.cheque_amount:
-                    all_fields_non_empty = False  # Set flag to false if any field is empty
+                    frappe.throw(f"Row #{row.idx}: 'Amount' is required.")
+                
+                # 2. Mandatory check for Cheque Number (Only if mandatory=True)
+                if mandatory and not row.cheque_number:
+                    frappe.throw(f"Row #{row.idx}: 'Cheque Number' is mandatory for this transaction.")
 
-            # Now you can take action based on the all_fields_non_empty flag
-            if not all_fields_non_empty:
-                # Raise a validation error if any field is empty
-                frappe.throw("Please Fill Amount.")  
-                      
+                # 3. Numeric validation (Runs if a value is provided, regardless of category)
+                if row.cheque_number and not str(row.cheque_number).isdigit():
+                    frappe.throw(f"Row #{row.idx}: 'Cheque Number' must contain only digits.")
 
     def validate(self):
-        if not self.stage_1_emp_status:
-           self.check_transaction_date()
+        self.check_transaction_date()
                   
         if self.custodian_1 == self.custodian_2:
             frappe.throw("Please Change Custodians, both cannot be the same!!")
@@ -64,13 +50,13 @@ class CMS(Document):
                frappe.throw("Amount Cannot be Zero")
 
         if self.transaction_category == "CIT" and self.transaction_type == "ACCOUNT TRANSFER" and self.select_branch != "Other Branch":
-           self.check_cheque_details()
+           self.check_cheque_details(mandatory=False)
 
         if self.transaction_category == "WITHDRAWAL":
-           self.check_cheque_details()      
+           self.check_cheque_details(mandatory=True)      
         
         if self.transaction_category == "DEPOSIT":
-           self.check_amount_details()         
+           self.check_cheque_details(mandatory=False)         
 
     def before_save(self):
         # --------------------------------------------------

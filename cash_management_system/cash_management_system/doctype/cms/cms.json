@@ -325,7 +325,6 @@
    "label": "Transaction Receipt"
   },
   {
-   "depends_on": "eval:doc.transaction_category === \"CIT\"\n",
    "fieldname": "mode_of_transportation_section",
    "fieldtype": "Section Break",
    "label": "Mode Of Transportation"
@@ -333,8 +332,7 @@
   {
    "fieldname": "vehicle_number",
    "fieldtype": "Data",
-   "label": "Vehicle Number",
-   "mandatory_depends_on": "eval:doc.transaction_category === \"CIT\"\n"
+   "label": "Vehicle Number"
   },
   {
    "fieldname": "driver_name",
@@ -349,8 +347,7 @@
   {
    "fieldname": "date_and_time_of_movement",
    "fieldtype": "Datetime",
-   "label": "Date & Time of Movement",
-   "mandatory_depends_on": "eval:doc.transaction_category === \"CIT\"\n"
+   "label": "Date & Time of Movement"
   },
   {
    "fieldname": "remarks",
@@ -361,7 +358,6 @@
    "fieldname": "vehicle_type",
    "fieldtype": "Select",
    "label": "Vehicle  Type",
-   "mandatory_depends_on": "eval:doc.transaction_category === \"CIT\"\n",
    "options": "\n2 wheeler\n4 wheeler"
   },
   {
@@ -375,7 +371,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-02-06 15:34:39.069837",
+ "modified": "2026-02-07 11:28:21.700263",
  "modified_by": "Administrator",
  "module": "Cash Management System",
  "name": "CMS",
