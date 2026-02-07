@@ -27,8 +27,9 @@ frappe.ui.form.on("CMS", {
           .trim();
         console.log("User Designation:", frm._user_designation);
 
-        // ✅ run access check ONLY after designation is available
+        // ✅ run access check and role validation ONLY after designation is available
         apply_page_access_control(frm);
+        frm.trigger("role_validation");
       },
     });
     frm.set_query("bank_name", "cheque_details", function (doc, cdt, cdn) {
@@ -50,7 +51,9 @@ frappe.ui.form.on("CMS", {
     frm.trigger("transaction_type");
 
     // frm.trigger("home_button");
-    frm.trigger("role_validation");
+    if (frm._user_designation) {
+      frm.trigger("role_validation");
+    }
     frm.trigger("role_check");
     frm.trigger("section_colors");
     $("span.sidebar-toggle-btn").hide();
@@ -1706,20 +1709,33 @@ function send_cit_ack(frm) {
 }
 function apply_page_access_control(frm) {
   const roles = frappe.user_roles || [];
-  const designation = frm._user_designation || "";
+  const designation = (frm._user_designation || "").toUpperCase().trim();
 
   const isBranchManager = roles.includes("Branch User");
 
-  const isSpecialDesignation =
-    designation === "REGIONAL OPERATION MANAGER" ||
-    designation === "ZONAL MANAGER" ||
-    designation === "BRANCH MANAGER" ||
-    designation === "BRANCH OPERATION MANAGER" ||
-    designation === "BRANCH OFFICER" ||
-    designation === "AGM";
+  const allowedDesignations = [
+    "ASST. BRANCH MANAGER",
+    "BRANCH OFFICER",
+    "BRANCH MANAGER",
+    "BRANCH OPERATION MANAGER",
+    "CUSTOMER SERVICE OFFICER",
+    "CUSTOMER SERVICE MANAGER",
+    "CLUSTER OPERATION MANAGER",
+    "REGIONAL OPERATION MANAGER",
+    "ASST. ZONAL MANAGER",
+    "ZONAL MANAGER",
+    "AGM",
+  ];
+
+  const isSpecialDesignation = allowedDesignations.includes(designation);
 
   // ✅ Allowed users → DO NOTHING
-  if (isBranchManager || isSpecialDesignation) {
+  if (
+    isBranchManager ||
+    isSpecialDesignation ||
+    frappe.session.user === "Administrator" ||
+    frappe.session.user === "813@sahayog.com"
+  ) {
     console.log("Access allowed");
     return;
   }
