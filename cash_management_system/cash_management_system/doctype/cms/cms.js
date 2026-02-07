@@ -135,105 +135,110 @@ frappe.ui.form.on("CMS", {
       return;
     }
 
-    frappe.db
-      .get_value("CMS User", user, ["requester", "com_approver", "ho_approver"])
-      .then((res) => {
-        if (!res.message) return;
+    const requesterDesignations = [
+      "ASST. BRANCH MANAGER",
+      "BRANCH OFFICER",
+      "BRANCH MANAGER",
+      "BRANCH OPERATION MANAGER",
+      "CUSTOMER SERVICE OFFICER",
+      "CUSTOMER SERVICE MANAGER",
+    ];
 
-        const { requester, com_approver, ho_approver } = res.message;
+    const comDesignations = [
+      "CLUSTER OPERATION MANAGER",
+      "REGIONAL OPERATION MANAGER",
+      "ASST. ZONAL MANAGER",
+      "ZONAL MANAGER",
+    ];
 
-        // --------------------------------------------------
-        // RESOLVE ROLE
-        // --------------------------------------------------
-        let role = null;
+    let role = null;
+    const userDesig = (frm._user_designation || "").toUpperCase().trim();
 
-        if (com_approver) role = "COM-Approver";
-        else if (ho_approver) role = "HO-Approver";
-        else if (requester) role = "Requester";
+    // 1. Check Designation for Requester
+    if (requesterDesignations.includes(userDesig)) {
+      role = "Requester";
+    }
+    // 2. Check Designation for COM Approver
+    else if (comDesignations.includes(userDesig)) {
+      role = "COM-Approver";
+    }
+    // 3. Hardcoded HO Approver by User ID
+    else if (user === "813@sahayog.com") {
+      role = "HO-Approver";
+    }
 
-        frm._cms_role = role;
-        console.log("CMS ROLE RESOLVED:", role);
+    frm._cms_role = role;
+    console.log("CMS ROLE RESOLVED:", role);
 
-        // --------------------------------------------------
-        // REQUESTER
-        // --------------------------------------------------
-        if (role === "Requester") {
-          // ✅ Show Submit ONLY when status is Draft
-          if (frm.doc.status === "Draft") {
-            frm.trigger("creator_submit_btn");
-          } else {
-            // ❌ Hide Submit in all other states
-            frm.remove_custom_button("Submit");
-            frm.disable_save();
-          }
+    // --------------------------------------------------
+    // REQUESTER
+    // --------------------------------------------------
+    if (role === "Requester") {
+      // ✅ Show Submit ONLY when status is Draft
+      if (frm.doc.status === "Draft") {
+        frm.trigger("creator_submit_btn");
+      } else {
+        // ❌ Hide Submit in all other states
+        frm.remove_custom_button("Submit");
+        frm.disable_save();
+      }
 
-          if (frm.doc.status === "Approved") {
-            frm.trigger("requester_intro");
-            frm.trigger("upload_attach");
-          }
+      if (frm.doc.status === "Approved") {
+        frm.trigger("requester_intro");
+        frm.trigger("upload_attach");
+      }
 
-          frm.trigger("creator_show_intro");
-          frm.set_df_property("approved_movement_charges", "read_only", 1);
-        }
+      frm.trigger("creator_show_intro");
+      frm.set_df_property("approved_movement_charges", "read_only", 1);
+    }
 
-        // --------------------------------------------------
-        // COM APPROVER ✅
-        // --------------------------------------------------
-        else if (
-          role === "COM-Approver" ||
-          frm._user_designation === "REGIONAL OPERATION MANAGER" ||
-          frm._user_designation === "ZONAL MANAGER" ||
-          frm._user_designation === "BRANCH MANAGER" ||
-          frm._user_designation === "BRANCH OPERATION MANAGER" ||
-          frm._user_designation === "BRANCH OFFICER"
-        ) {
-          frm.disable_save(); // only save, NOT form
-          frm.trigger("com_read_only");
-          frm.trigger("com_show_intro");
+    // --------------------------------------------------
+    // COM APPROVER ✅
+    // --------------------------------------------------
+    else if (role === "COM-Approver") {
+      frm.disable_save(); // only save, NOT form
+      frm.trigger("com_read_only");
+      frm.trigger("com_show_intro");
 
-          if (
-            frm.doc.stage_1_emp_status === "Pending" ||
-            frm.doc.stage_1_emp_status === "Rejected"
-          ) {
-            frm.trigger("com_buttons");
-          }
-        }
+      if (
+        frm.doc.stage_1_emp_status === "Pending" ||
+        frm.doc.stage_1_emp_status === "Rejected"
+      ) {
+        frm.trigger("com_buttons");
+      }
+    }
 
-        // --------------------------------------------------
-        // HO APPROVER
-        // --------------------------------------------------
-        else if (role === "HO-Approver") {
-          frm.disable_save();
-          frm.trigger("ho_read_only");
-          frm.trigger("ho_show_intro");
+    // --------------------------------------------------
+    // HO APPROVER
+    // --------------------------------------------------
+    else if (role === "HO-Approver") {
+      frm.disable_save();
+      frm.trigger("ho_read_only");
+      frm.trigger("ho_show_intro");
 
-          if (
-            frm.doc.stage_2_emp_status === "Pending" ||
-            frm.doc.stage_2_emp_status === "Rejected"
-          ) {
-            frm.trigger("ho_buttons");
-            frm.trigger("ho_intro");
-          }
-        }
+      if (
+        frm.doc.stage_2_emp_status === "Pending" ||
+        frm.doc.stage_2_emp_status === "Rejected"
+      ) {
+        frm.trigger("ho_buttons");
+        frm.trigger("ho_intro");
+      }
+    }
 
-        // --------------------------------------------------
-        // SYSTEM MANAGER
-        // --------------------------------------------------
-        else if (frappe.user.has_role("System Manager")) {
-          frm.enable_save();
-        }
+    // --------------------------------------------------
+    // SYSTEM MANAGER
+    // --------------------------------------------------
+    else if (frappe.user.has_role("System Manager")) {
+      frm.enable_save();
+    }
 
-        // --------------------------------------------------
-        // OTHERS
-        // --------------------------------------------------
-        else {
-          // frm.disable_form();
-          frm.disable_save();
-        }
-      })
-      .catch((err) => {
-        console.error("CMS role fetch failed:", err);
-      });
+    // --------------------------------------------------
+    // OTHERS
+    // --------------------------------------------------
+    else {
+      // frm.disable_form();
+      frm.disable_save();
+    }
   },
   upload_attach: function (frm) {
     // Add custom button

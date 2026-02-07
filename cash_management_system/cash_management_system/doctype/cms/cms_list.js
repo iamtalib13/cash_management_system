@@ -41,7 +41,14 @@ frappe.listview_settings["CMS"] = {
           "BRANCH OPERATION MANAGER",
           "BRANCH OFFICER",
           "REGIONAL OPERATION MANAGER",
-          "AGM",
+          "BRANCH OFFICER",
+          "Branch Operation Manager",
+          "Customer Service Officer",
+          "Customer Service Manager",
+          "CLUSTER OPERATION MANAGER",
+          "Regional Operation Manager",
+          "ASST. ZONAL MANAGER",
+          "ZONAL MANAGER",
         ];
 
         // ❌ Not allowed → blank page
