@@ -935,7 +935,7 @@ def generate_dynamic_pdf(name):
 def fetch_employee(employee_id):
     # Use parameterized query to prevent SQL injection
     sql_query = """
-        SELECT CONCAT(first_name, ' ', last_name) AS employee_name, designation, branch, custom_region, custom_district, custom_zone,department, custom_division, cell_number
+        SELECT CONCAT(first_name, ' ', last_name) AS employee_name, designation, branch, custom_region, custom_district, custom_zone,department, custom_division, cell_number,sol_id
         FROM `tabEmployee`
         WHERE name=%s
     """

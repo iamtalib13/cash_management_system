@@ -4,6 +4,7 @@ frappe.ui.form.on("CMS", {
     // if (frm.is_new()) {
     //   window.location.reload(); // Refreshes the page
     // }
+
     frm.set_query("bank_name", "cheque_details", function (doc, cdt, cdn) {
       return {
         filters: {
@@ -29,6 +30,13 @@ frappe.ui.form.on("CMS", {
         // ✅ run access check ONLY after designation is available
         apply_page_access_control(frm);
       },
+    });
+    frm.set_query("bank_name", "cheque_details", function (doc, cdt, cdn) {
+      return {
+        filters: {
+          branch: frm.doc.sol_id, // This now has the correct value
+        },
+      };
     });
   },
   validate: function (frm) {
@@ -1131,17 +1139,25 @@ frappe.ui.form.on("CMS", {
     // Fetching Employee Data
     frm.call({
       method: "fetch_employee",
-      args: {
-        employee_id: eid,
-      },
+      args: { employee_id: eid },
       callback: function (r) {
-        if (!r.exc) {
+        // Bail out on RPC error
+        if (r.exc) {
+          console.error("fetch_employee error:", r.exc);
+          return;
+        }
+
+        if (r.message && r.message[0]) {
           const employeeData = r.message[0]; // Accessing the first element of the array
+          // set sol_id from the fetched data
+          frm.doc.sol_id = employeeData.sol_id;
+
           console.log("Employee Data:", employeeData);
 
           // Safeguard against potential HTML injection
           const escapeHtml = (unsafe) => {
-            return unsafe
+            return (unsafe || "")
+              .toString()
               .replace(/&/g, "&amp;")
               .replace(/</g, "&lt;")
               .replace(/>/g, "&gt;")
@@ -1149,54 +1165,54 @@ frappe.ui.form.on("CMS", {
               .replace(/'/g, "&#039;");
           };
 
-          // Directly set the response data in HTML with inline CSS
+          // Directly set the response data in HTML with inline CSS, using escaped values
           let html = `
-			  <style>
-				.myemployee-grid {
-				  display: grid;
-				  grid-template-columns: repeat(3, 1fr); /* Creates 3 equal columns */
-				  gap: 10px; /* Adds space between items */
-				}
-				.myemployee-grid p {
-				  border-radius: 5px;
-				  padding: 7px;
-				  margin: 5px;
-				  background: #f4f5f6;
-				}
-				.mylabel{
-				  margin:8px;
-				  font-size: var(--text-sm);
-				}
-			  </style>
-			  <div class="employee-details">
-				  <div class="myemployee-grid">
-					<div>
-					  <span class="mylabel">Employee Name</span>
-					  <p id="employee_name">${employeeData.employee_name || ""}</p>
-					  <span class="mylabel">Employee ID</span>
-					  <p id="employee_id">${eid}</p>
-					  <span class="mylabel">Designation</span>
-					  <p id="employee_designation">${employeeData.designation || ""}</p>
-					</div>
-					<div>
-					<span class="mylabel">Phone</span>
-					  <p id="employee_phone"> ${employeeData.cell_number || ""}</p>
-					  <span class="mylabel">Region</span>
-					  <p id="employee_region"> ${employeeData.custom_region || ""}</p>
-					  <span class="mylabel">Division</span>
-					  <p id="employee_division"> ${employeeData.custom_division || ""}</p>
-					</div>
-					<div>
-					<span class="mylabel">District</span>
-					  <p id="employee_district"> ${employeeData.custom_district || ""}</p>
-					  <span class="mylabel">Branch</span>
-					  <p id="employee_branch"> ${employeeData.branch || ""}</p>
-					  <span class="mylabel">Department</span>
-					  <p id="employee_department"> ${employeeData.department || ""}</p>
-					</div>
-				  </div>
-			  </div>
-		  `;
+        <style>
+        .myemployee-grid {
+          display: grid;
+          grid-template-columns: repeat(3, 1fr); /* Creates 3 equal columns */
+          gap: 10px; /* Adds space between items */
+        }
+        .myemployee-grid p {
+          border-radius: 5px;
+          padding: 7px;
+          margin: 5px;
+          background: #f4f5f6;
+        }
+        .mylabel{
+          margin:8px;
+          font-size: var(--text-sm);
+        }
+        </style>
+        <div class="employee-details">
+          <div class="myemployee-grid">
+          <div>
+            <span class="mylabel">Employee Name</span>
+            <p id="employee_name">${escapeHtml(employeeData.employee_name)}</p>
+            <span class="mylabel">Employee ID</span>
+            <p id="employee_id">${escapeHtml(eid)}</p>
+            <span class="mylabel">Designation</span>
+            <p id="employee_designation">${escapeHtml(employeeData.designation)}</p>
+          </div>
+          <div>
+          <span class="mylabel">Phone</span>
+            <p id="employee_phone">${escapeHtml(employeeData.cell_number)}</p>
+            <span class="mylabel">Region</span>
+            <p id="employee_region">${escapeHtml(employeeData.custom_region)}</p>
+            <span class="mylabel">Division</span>
+            <p id="employee_division">${escapeHtml(employeeData.custom_division)}</p>
+          </div>
+          <div>
+          <span class="mylabel">District</span>
+            <p id="employee_district">${escapeHtml(employeeData.custom_district)}</p>
+            <span class="mylabel">Branch</span>
+            <p id="employee_branch">${escapeHtml(employeeData.branch)}</p>
+            <span class="mylabel">Department</span>
+            <p id="employee_department">${escapeHtml(employeeData.department)}</p>
+          </div>
+          </div>
+        </div>
+      `;
 
           // Set the above `html` as Summary HTML
           frm.set_df_property("employee_html", "options", html);
@@ -1207,26 +1223,17 @@ frappe.ui.form.on("CMS", {
 
   set_branch: async function (frm) {
     const user = frappe.session.user;
-
     try {
-      const r = await frappe.db.get_value(
-        "Employee",
-        { user_id: user }, // ← match by logged-in user
-        ["branch", "sol_id"], // ← fetch the branch field,
-      );
-
-      const branch = r.message ? r.message.branch : null;
-      const sol_id = r.message ? r.message.sol_id : null;
-      // console.log("Employee Branch:", branch);
-      // console.log("Employee Sol ID:", sol_id);
-
-      if (branch) {
-        frm.set_value("branch", branch);
-      } else {
-        console.log("Branch not found for logged-in employee.");
+      const r = await frappe.db.get_value("Employee", { user_id: user }, [
+        "branch",
+        "sol_id",
+      ]);
+      if (r.message) {
+        frm.set_value("branch", r.message.branch);
+        // frm.set_value("sol_id", r.message.sol_id); // Set dynamically for the session
       }
-    } catch (error) {
-      console.error("Error retrieving branch:", error);
+    } catch {
+      console.log("Error fetching employee branch");
     }
   },
 
