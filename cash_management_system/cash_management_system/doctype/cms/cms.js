@@ -1710,7 +1710,8 @@ function apply_page_access_control(frm) {
     designation === "ZONAL MANAGER" ||
     designation === "BRANCH MANAGER" ||
     designation === "BRANCH OPERATION MANAGER" ||
-    designation === "BRANCH OFFICER";
+    designation === "BRANCH OFFICER" ||
+    designation === "AGM";
 
   // ✅ Allowed users → DO NOTHING
   if (isBranchManager || isSpecialDesignation) {
