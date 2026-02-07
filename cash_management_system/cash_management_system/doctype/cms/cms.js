@@ -706,65 +706,62 @@ frappe.ui.form.on("CMS", {
     let transaction_category = frm.doc.transaction_category;
 
     frm.add_custom_button(__("Submit"), function () {
-      // Determine the confirmation message based on transaction_category value
-      let confirmation_message = "";
-      if (transaction_category === "DEPOSIT") {
-        confirmation_message =
-          "Are you sure you want to submit this DEPOSIT request?";
-      } else if (transaction_category === "WITHDRAWAL") {
-        confirmation_message =
-          "Are you sure you want to submit this WITHDRAWAL request?";
-      } else if (transaction_category === "CIT") {
-        confirmation_message =
-          "Are you sure you want to submit this CIT request?";
-      } else {
-        confirmation_message = "Are you sure you want to submit the form?";
+      // ✅ FIRST: frontend mandatory check
+      if (
+        !frm.doc.transaction_category ||
+        !frm.doc.date_of_transaction ||
+        !frm.doc.custodian_1 ||
+        !frm.doc.custodian_2
+      ) {
+        frappe.msgprint("Please fill all mandatory fields.");
+        return;
       }
 
-      // Show the confirmation dialog with the customized message
-      frappe.confirm(confirmation_message, function () {
-        // Fetch COM Approver (email)
-        frappe.db
-          .get_value("CMS User", { com_approver: 1 }, "user")
-          .then((r) => {
-            if (!r.message?.user) {
-              frappe.msgprint("COM Approver not configured");
-              return;
-            }
-
-            const com_user = r.message.user;
-
-            // Convert email → Employee ID
+      frappe.confirm("Are you sure you want to submit?", function () {
+        // 🔹 ONLY save first
+        frm
+          .save()
+          .then(() => {
+            // 🔹 AFTER successful save → fetch COM approver
             frappe.db
-              .get_value("Employee", { user_id: com_user }, "name")
-              .then((emp) => {
-                if (!emp.message?.name) {
-                  // we finde the com approver based on the branch
-                  // of the requester
-                  // if the cms user com approver branch is == requesters branch then that is the com approver
-                  frappe.msgprint("Employee not found for COM Approver");
+              .get_value("CMS User", { com_approver: 1 }, "user")
+              .then((r) => {
+                if (!r.message) {
+                  frappe.msgprint("COM Approver not configured");
                   return;
                 }
 
-                // ✅ ONLY THESE THREE FIELDS
-                frm.set_value("stage_1_emp_user", emp.message.name); // Employee ID
-                frm.set_value("stage_1_emp_status", "Pending");
-                frm.set_value("status", "Pending");
+                frappe.db
+                  .get_value("Employee", { user_id: r.message.user }, "name")
+                  .then((emp) => {
+                    if (!emp.message) {
+                      frappe.msgprint("Employee not found for COM Approver");
+                      return;
+                    }
 
-                frappe.show_alert(
-                  {
-                    message: __("Form submitted successfully"),
-                    indicator: "green",
-                  },
-                  8,
-                );
-                // preserve_child_tables(frm);
+                    // ✅ NOW update workflow fields
+                    frm.set_value("stage_1_emp_user", emp.message.name);
+                    frm.set_value("stage_1_emp_status", "Pending");
+                    frm.set_value("status", "Pending");
 
-                frm.save();
+                    frm.save().then(() => {
+                      frappe.show_alert(
+                        {
+                          message: "Form submitted successfully",
+                          indicator: "green",
+                        },
+                        8,
+                      );
+                    });
+                  });
               });
+          })
+          .catch(() => {
+            frappe.msgprint("Please fix validation errors.");
           });
       });
     });
+
     frm.change_custom_button_type("Submit", null, "success");
   },
   show_approval_tracker: function (frm) {
