@@ -82,21 +82,143 @@ frappe.ui.form.on("CMS", {
     //   frm.trigger("creator_submit_btn");
     // }
     // Only for CIT transactions
-    if (frm.doc.transaction_category !== "CIT") return;
-    if (frm.doc.stage_2_emp_status !== "Approved") return;
+    if (frm.doc.transaction_category === "CIT") {
+      if (frm.doc.stage_2_emp_status === "Approved" && !frm.doc.acknowledged) {
+        // Add ACK button
+        frm.add_custom_button(__("CIT Cash Reached"), function () {
+          frappe.confirm(
+            "Confirm that CIT cash has safely reached the destination?",
+            function () {
+              send_cit_ack(frm);
+            },
+          );
+        });
+      }
+    }
 
-    // Do not show if already acknowledged
-    if (frm.doc.acknowledged) return;
-    // Add ACK button
-    frm.add_custom_button(__("CIT Cash Reached"), function () {
-      frappe.confirm(
-        "Confirm that CIT cash has safely reached the destination?",
-        function () {
-          send_cit_ack(frm);
-          // this is just a button showing cdoe sending acknowledgement frappe call is below
-        },
-      );
+    // Add Update Bank Details button for WITHDRAWAL or DEPOSIT
+    if (
+      ["WITHDRAWAL", "DEPOSIT"].includes(frm.doc.transaction_category) &&
+      frm.doc.status === "Approved"
+    ) {
+      frm.add_custom_button(__("Update Bank Details"), function () {
+        frm.trigger("open_update_bank_details_dialog");
+      });
+    }
+  },
+
+  open_update_bank_details_dialog: function (frm) {
+    if (!frm.doc.cheque_details || frm.doc.cheque_details.length === 0) {
+      frappe.msgprint(__("No cheque details found to update."));
+      return;
+    }
+
+    const is_deposit = frm.doc.transaction_category === "DEPOSIT";
+
+    let options = frm.doc.cheque_details.map((row) => {
+      let desc = is_deposit
+        ? `Account: ${row.account_number || row.bank_name}`
+        : `Cheque: ${row.cheque_number || "No Number"}`;
+      return {
+        label: `Row ${row.idx}: ${desc} (Amt: ${row.cheque_amount})`,
+        value: row.name,
+      };
     });
+
+    let d = new frappe.ui.Dialog({
+      title: __("Update Bank Details"),
+      fields: [
+        {
+          label: __("Select Row to Update"),
+          fieldname: "select_row",
+          fieldtype: "Select",
+          options: options,
+          reqd: 1,
+          on_change: function () {
+            let row_name = d.get_value("select_row");
+            let row = (frm.doc.cheque_details || []).find(
+              (r) => r.name === row_name,
+            );
+            if (row) {
+              if (!is_deposit) {
+                d.set_value("new_cheque_number", row.cheque_number);
+              }
+              d.set_value("new_cheque_amount", row.cheque_amount);
+            }
+          },
+        },
+        {
+          label: __("New Cheque Number"),
+          fieldname: "new_cheque_number",
+          fieldtype: "Data",
+          hidden: is_deposit,
+          reqd: !is_deposit,
+        },
+        {
+          label: __("New Amount"),
+          fieldname: "new_cheque_amount",
+          fieldtype: "Currency",
+          reqd: 1,
+        },
+      ],
+      primary_action_label: __("Update"),
+      primary_action: function (values) {
+        let row = (frm.doc.cheque_details || []).find(
+          (r) => r.name === values.select_row,
+        );
+        if (row) {
+          if (!is_deposit) {
+            frappe.model.set_value(
+              row.doctype,
+              row.name,
+              "cheque_number",
+              values.new_cheque_number,
+            );
+          }
+          complete_update(row, values);
+        }
+        d.hide();
+      },
+    });
+
+    const complete_update = (row, values) => {
+      frappe.model.set_value(
+        row.doctype,
+        row.name,
+        "cheque_amount",
+        values.new_cheque_amount,
+      );
+
+      frm.refresh_field("cheque_details");
+
+      // Re-calculate total amount
+      let total = 0;
+      (frm.doc.cheque_details || []).forEach((r) => {
+        total += flt(r.cheque_amount);
+      });
+      frm.set_value("amount", total);
+
+      frappe.show_alert({
+        message: __("Bank details updated successfully"),
+        indicator: "green",
+      });
+    };
+
+    d.show();
+
+    // Initial populate
+    let first_row_name = d.get_value("select_row");
+    if (first_row_name) {
+      let row = (frm.doc.cheque_details || []).find(
+        (r) => r.name === first_row_name,
+      );
+      if (row) {
+        if (!is_deposit) {
+          d.set_value("new_cheque_number", row.cheque_number);
+        }
+        d.set_value("new_cheque_amount", row.cheque_amount);
+      }
+    }
   },
   // home_button: function (frm) {
   //   frm.add_custom_button(__("Home"), function () {
