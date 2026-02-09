@@ -42,9 +42,9 @@
   "mode_of_transportation_section",
   "vehicle_type",
   "vehicle_number",
+  "date_and_time_of_movement",
   "driver_name",
   "driver_contact_number",
-  "date_and_time_of_movement",
   "remarks",
   "approval_tab",
   "status_section",
@@ -332,7 +332,8 @@
   {
    "fieldname": "vehicle_number",
    "fieldtype": "Data",
-   "label": "Vehicle Number"
+   "label": "Vehicle Number",
+   "reqd": 1
   },
   {
    "fieldname": "driver_name",
@@ -347,7 +348,8 @@
   {
    "fieldname": "date_and_time_of_movement",
    "fieldtype": "Datetime",
-   "label": "Date & Time of Movement"
+   "label": "Date & Time of Movement",
+   "reqd": 1
   },
   {
    "fieldname": "remarks",
@@ -358,7 +360,8 @@
    "fieldname": "vehicle_type",
    "fieldtype": "Select",
    "label": "Vehicle  Type",
-   "options": "\n2 wheeler\n4 wheeler"
+   "options": "\n2 wheeler\n4 wheeler",
+   "reqd": 1
   },
   {
    "default": "0",
@@ -371,7 +374,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-02-07 11:28:21.700263",
+ "modified": "2026-02-09 13:44:04.817122",
  "modified_by": "Administrator",
  "module": "Cash Management System",
  "name": "CMS",
