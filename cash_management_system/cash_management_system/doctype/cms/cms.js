@@ -96,9 +96,9 @@ frappe.ui.form.on("CMS", {
       }
     }
 
-    // Add Update Bank Details button for WITHDRAWAL
+    // Add Update Bank Details button for WITHDRAWAL or DEPOSIT
     if (
-      frm.doc.transaction_category === "WITHDRAWAL" &&
+      ["WITHDRAWAL", "DEPOSIT"].includes(frm.doc.transaction_category) &&
       frm.doc.status === "Approved"
     ) {
       frm.add_custom_button(__("Update Bank Details"), function () {
@@ -113,9 +113,14 @@ frappe.ui.form.on("CMS", {
       return;
     }
 
+    const is_deposit = frm.doc.transaction_category === "DEPOSIT";
+
     let options = frm.doc.cheque_details.map((row) => {
+      let desc = is_deposit
+        ? `Account: ${row.account_number || row.bank_name}`
+        : `Cheque: ${row.cheque_number || "No Number"}`;
       return {
-        label: `Row ${row.idx}: ${row.cheque_number || "No Number"} (Amt: ${row.cheque_amount})`,
+        label: `Row ${row.idx}: ${desc} (Amt: ${row.cheque_amount})`,
         value: row.name,
       };
     });
@@ -135,19 +140,39 @@ frappe.ui.form.on("CMS", {
               (r) => r.name === row_name,
             );
             if (row) {
-              d.set_value("new_cheque_number", row.cheque_number);
+              if (is_deposit) {
+                d.set_value("new_bank_name", row.bank_name);
+              } else {
+                d.set_value("new_cheque_number", row.cheque_number);
+              }
               d.set_value("new_cheque_amount", row.cheque_amount);
             }
+          },
+        },
+        {
+          label: __("Bank Name / Account Number"),
+          fieldname: "new_bank_name",
+          fieldtype: "Link",
+          options: "Banks",
+          hidden: !is_deposit,
+          reqd: is_deposit,
+          get_query: function () {
+            return {
+              filters: {
+                branch: frm.doc.sol_id,
+              },
+            };
           },
         },
         {
           label: __("New Cheque Number"),
           fieldname: "new_cheque_number",
           fieldtype: "Data",
-          reqd: 1,
+          hidden: is_deposit,
+          reqd: !is_deposit,
         },
         {
-          label: __("New Cheque Amount"),
+          label: __("New Amount"),
           fieldname: "new_cheque_amount",
           fieldtype: "Currency",
           reqd: 1,
@@ -159,12 +184,22 @@ frappe.ui.form.on("CMS", {
           (r) => r.name === values.select_row,
         );
         if (row) {
-          frappe.model.set_value(
-            row.doctype,
-            row.name,
-            "cheque_number",
-            values.new_cheque_number,
-          );
+          if (is_deposit) {
+            frappe.model.set_value(
+              row.doctype,
+              row.name,
+              "bank_name",
+              values.new_bank_name,
+            );
+          } else {
+            frappe.model.set_value(
+              row.doctype,
+              row.name,
+              "cheque_number",
+              values.new_cheque_number,
+            );
+          }
+
           frappe.model.set_value(
             row.doctype,
             row.name,
@@ -182,7 +217,7 @@ frappe.ui.form.on("CMS", {
           frm.set_value("amount", total);
 
           frappe.show_alert({
-            message: __("Cheque details updated successfully"),
+            message: __("Bank details updated successfully"),
             indicator: "green",
           });
         }
@@ -192,14 +227,18 @@ frappe.ui.form.on("CMS", {
 
     d.show();
 
-    // Initial populate if only one row or first row selected
+    // Initial populate
     let first_row_name = d.get_value("select_row");
     if (first_row_name) {
       let row = (frm.doc.cheque_details || []).find(
         (r) => r.name === first_row_name,
       );
       if (row) {
-        d.set_value("new_cheque_number", row.cheque_number);
+        if (is_deposit) {
+          d.set_value("new_bank_name", row.bank_name);
+        } else {
+          d.set_value("new_cheque_number", row.cheque_number);
+        }
         d.set_value("new_cheque_amount", row.cheque_amount);
       }
     }
