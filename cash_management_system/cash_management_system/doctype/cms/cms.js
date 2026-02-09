@@ -140,28 +140,11 @@ frappe.ui.form.on("CMS", {
               (r) => r.name === row_name,
             );
             if (row) {
-              if (is_deposit) {
-                d.set_value("new_bank_name", row.bank_name);
-              } else {
+              if (!is_deposit) {
                 d.set_value("new_cheque_number", row.cheque_number);
               }
               d.set_value("new_cheque_amount", row.cheque_amount);
             }
-          },
-        },
-        {
-          label: __("Bank Name / Account Number"),
-          fieldname: "new_bank_name",
-          fieldtype: "Link",
-          options: "Banks",
-          hidden: !is_deposit,
-          reqd: is_deposit,
-          get_query: function () {
-            return {
-              filters: {
-                branch: frm.doc.sol_id,
-              },
-            };
           },
         },
         {
@@ -184,14 +167,7 @@ frappe.ui.form.on("CMS", {
           (r) => r.name === values.select_row,
         );
         if (row) {
-          if (is_deposit) {
-            frappe.model.set_value(
-              row.doctype,
-              row.name,
-              "bank_name",
-              values.new_bank_name,
-            );
-          } else {
+          if (!is_deposit) {
             frappe.model.set_value(
               row.doctype,
               row.name,
@@ -199,31 +175,34 @@ frappe.ui.form.on("CMS", {
               values.new_cheque_number,
             );
           }
-
-          frappe.model.set_value(
-            row.doctype,
-            row.name,
-            "cheque_amount",
-            values.new_cheque_amount,
-          );
-
-          frm.refresh_field("cheque_details");
-
-          // Re-calculate total amount
-          let total = 0;
-          (frm.doc.cheque_details || []).forEach((r) => {
-            total += flt(r.cheque_amount);
-          });
-          frm.set_value("amount", total);
-
-          frappe.show_alert({
-            message: __("Bank details updated successfully"),
-            indicator: "green",
-          });
+          complete_update(row, values);
         }
         d.hide();
       },
     });
+
+    const complete_update = (row, values) => {
+      frappe.model.set_value(
+        row.doctype,
+        row.name,
+        "cheque_amount",
+        values.new_cheque_amount,
+      );
+
+      frm.refresh_field("cheque_details");
+
+      // Re-calculate total amount
+      let total = 0;
+      (frm.doc.cheque_details || []).forEach((r) => {
+        total += flt(r.cheque_amount);
+      });
+      frm.set_value("amount", total);
+
+      frappe.show_alert({
+        message: __("Bank details updated successfully"),
+        indicator: "green",
+      });
+    };
 
     d.show();
 
@@ -234,9 +213,7 @@ frappe.ui.form.on("CMS", {
         (r) => r.name === first_row_name,
       );
       if (row) {
-        if (is_deposit) {
-          d.set_value("new_bank_name", row.bank_name);
-        } else {
+        if (!is_deposit) {
           d.set_value("new_cheque_number", row.cheque_number);
         }
         d.set_value("new_cheque_amount", row.cheque_amount);
