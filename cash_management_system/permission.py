@@ -48,18 +48,29 @@ def cms_permission_query(user):
     # -------------------------------------------------
     region_designations = {
         "ZONAL MANAGER",
-        "REGIONAL OPERATION MANAGER"
+        "REGIONAL OPERATION MANAGER",
+        "CLUSTER OPERATION MANAGER"
     }
 
-    has_region_access = is_com_approver or designation in region_designations
+    has_region_access = is_com_approver or any(d in designation for d in region_designations)
 
     # -------------------------------------------------
     # 6. Build conditions dynamically
     # -------------------------------------------------
     conditions = []
 
-    # Own records (Requester)
-    if is_requester:
+    requester_designations = {
+        "ASST. BRANCH MANAGER",
+        "BRANCH OFFICER",
+        "BRANCH MANAGER",
+        "BRANCH OPERATION MANAGER",
+        "CUSTOMER SERVICE OFFICER",
+        "CUSTOMER SERVICE MANAGER",
+    }
+
+    # Own records (Requester / COM acting as Requester)
+    is_owner_designation = any(d in designation for d in requester_designations) or any(d in designation for d in region_designations)
+    if is_requester or is_com_approver or is_owner_designation:
         conditions.append(f"`tabCMS`.owner = '{user}'")
 
     # Region records (COM / ZM / ROM)
