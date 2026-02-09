@@ -163,7 +163,12 @@ frappe.ui.form.on("CMS", {
     }
     // 2. Check Designation for COM Approver
     else if (comDesignations.some((d) => userDesig.includes(d))) {
-      role = "COM-Approver";
+      // If owner or new, act as Requester to allow creation/submission
+      if (frm.is_new() || frm.doc.owner === user) {
+        role = "Requester";
+      } else {
+        role = "COM-Approver";
+      }
     }
     // 3. Hardcoded HO Approver by User ID
     else if (user === "813@sahayog.com") {

@@ -68,8 +68,9 @@ def cms_permission_query(user):
         "CUSTOMER SERVICE MANAGER",
     }
 
-    # Own records (Requester)
-    if is_requester or any(d in designation for d in requester_designations):
+    # Own records (Requester / COM acting as Requester)
+    is_owner_designation = any(d in designation for d in requester_designations) or any(d in designation for d in region_designations)
+    if is_requester or is_com_approver or is_owner_designation:
         conditions.append(f"`tabCMS`.owner = '{user}'")
 
     # Region records (COM / ZM / ROM)
