@@ -41,18 +41,16 @@ frappe.listview_settings["CMS"] = {
           "BRANCH OPERATION MANAGER",
           "BRANCH OFFICER",
           "REGIONAL OPERATION MANAGER",
-          "BRANCH OFFICER",
-          "Branch Operation Manager",
-          "Customer Service Officer",
-          "Customer Service Manager",
+          "CUSTOMER SERVICE OFFICER",
+          "CUSTOMER SERVICE MANAGER",
           "CLUSTER OPERATION MANAGER",
-          "Regional Operation Manager",
           "ASST. ZONAL MANAGER",
           "ZONAL MANAGER",
+          "ASST. BRANCH MANAGER",
         ];
 
         // ❌ Not allowed → blank page
-        if (!allowed.includes(designation)) {
+        if (!allowed.some((d) => designation.includes(d))) {
           listview.$page.empty().html(`
             <div style="padding:40px;text-align:center;color:#888;">
               You are not authorized to view this page.
