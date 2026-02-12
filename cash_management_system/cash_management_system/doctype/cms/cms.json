@@ -333,7 +333,7 @@
    "fieldname": "vehicle_number",
    "fieldtype": "Data",
    "label": "Vehicle Number",
-   "reqd": 1
+   "mandatory_depends_on": "eval:doc.vehicle_type !== \"NA\"\n"
   },
   {
    "fieldname": "driver_name",
@@ -349,6 +349,7 @@
    "fieldname": "date_and_time_of_movement",
    "fieldtype": "Datetime",
    "label": "Date & Time of Movement",
+   "mandatory_depends_on": "eval:doc.vehicle_type !== \"NA\"\n",
    "reqd": 1
   },
   {
@@ -360,7 +361,7 @@
    "fieldname": "vehicle_type",
    "fieldtype": "Select",
    "label": "Vehicle  Type",
-   "options": "\n2 wheeler\n4 wheeler",
+   "options": "\nNA\n2 wheeler\n4 wheeler",
    "reqd": 1
   },
   {
@@ -374,11 +375,11 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-02-09 13:44:04.817122",
+ "modified": "2026-02-12 11:46:55.477211",
  "modified_by": "Administrator",
  "module": "Cash Management System",
  "name": "CMS",
- "naming_rule": "Expression",
+ "naming_rule": "Expression (old style)",
  "owner": "Administrator",
  "permissions": [
   {

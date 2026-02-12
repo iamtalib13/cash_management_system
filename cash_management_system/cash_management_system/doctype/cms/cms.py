@@ -99,19 +99,29 @@ class CMS(Document):
         # Set the stage_1_emp_user field using the get_com method
          
     def check_transaction_date(self):
-        # Today's date
+        # Get the previous status if it exists
+        old_status = self._doc_before_save.status if self._doc_before_save else None
+
+        # Only check if date is in the past during initial submission (Draft -> Pending)
+        # or while still in Draft. Skip for all other approval stages.
+        is_initial_submission = (self.status == "Pending" and (not old_status or old_status == "Draft"))
+        
+        if self.status == "Draft" or is_initial_submission:
+            # Today's date
+            current_date = getdate(nowdate())
+
+            # Convert transaction date to date object
+            transaction_date = getdate(self.date_of_transaction)
+
+            # 1. Date should not be in the past
+            if transaction_date < current_date:
+                frappe.throw(
+                    _("Transaction date cannot be in the past. Please select today or a future date.")
+                )
+
+        # The 5-day future limit should still apply to everyone to prevent extreme future dates
         current_date = getdate(nowdate())
-
-        # Convert transaction date to date object
         transaction_date = getdate(self.date_of_transaction)
-
-        # 1. Date should not be in the past
-        if transaction_date < current_date:
-            frappe.throw(
-                _("Transaction date cannot be in the past. Please select today or a future date.")
-            )
-
-        # 2. Date should not be more than 5 days from today
         max_allowed_date = add_days(current_date, 5)
 
         if transaction_date > max_allowed_date:
