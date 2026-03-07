@@ -2,33 +2,14 @@ import frappe
 
 def cms_permission_query(user):
     # -------------------------------------------------
-    # 1. Administrator → full access
+    # 1. Administrator & HO Approver → full access
     # -------------------------------------------------
-    if user == "Administrator":
+    ho_approver_ids = ["813@sahayog.com", "333@sahayog.com", "2800@sahayog.com"]
+    if user in ["Administrator"] + ho_approver_ids:
         return ""
 
     # -------------------------------------------------
-    # 2. CMS User flags
-    # -------------------------------------------------
-    cms_user = frappe.db.get_value(
-        "CMS User",
-        {"user": user},
-        ["requester", "com_approver", "ho_approver"],
-        as_dict=True
-    ) or {}
-
-    is_requester = cms_user.get("requester", 0)
-    is_com_approver = cms_user.get("com_approver", 0)
-    is_ho_approver = cms_user.get("ho_approver", 0)
-
-    # -------------------------------------------------
-    # 3. HO Approver → all records
-    # -------------------------------------------------
-    if is_ho_approver:
-        return ""
-
-    # -------------------------------------------------
-    # 4. Fetch Employee details
+    # 2. Fetch Employee details
     # -------------------------------------------------
     employee = frappe.db.get_value(
         "Employee",
@@ -44,21 +25,24 @@ def cms_permission_query(user):
     designation = (employee.designation or "").upper()
 
     # -------------------------------------------------
-    # 5. Region-level roles SHOW THE RECORDS WHERE REGION MATCHES
+    # 3. COM / Region-level roles
     # -------------------------------------------------
     region_designations = {
-        "ZONAL MANAGER",
+        "CLUSTER OPERATION MANAGER",
         "REGIONAL OPERATION MANAGER",
-        "CLUSTER OPERATION MANAGER"
+        "ASST. ZONAL MANAGER",
+        "ZONAL MANAGER"
     }
 
-    has_region_access = is_com_approver or any(d in designation for d in region_designations)
+    # If the user's designation is in the list, they act as a COM/Regional approver
+    has_region_access = any(d in designation for d in region_designations)
 
     # -------------------------------------------------
-    # 6. Build conditions dynamically
+    # 4. Build conditions dynamically
     # -------------------------------------------------
     conditions = []
 
+    # Requester Designations
     requester_designations = {
         "ASST. BRANCH MANAGER",
         "BRANCH OFFICER",
@@ -68,9 +52,10 @@ def cms_permission_query(user):
         "CUSTOMER SERVICE MANAGER",
     }
 
-    # Own records (Requester / COM acting as Requester)
-    is_owner_designation = any(d in designation for d in requester_designations) or any(d in designation for d in region_designations)
-    if is_requester or is_com_approver or is_owner_designation:
+    # Own records (If designation is in requester or region list)
+    is_requester_by_desig = any(d in designation for d in requester_designations)
+    
+    if is_requester_by_desig or has_region_access:
         conditions.append(f"`tabCMS`.owner = '{user}'")
 
     # Region records (COM / ZM / ROM)

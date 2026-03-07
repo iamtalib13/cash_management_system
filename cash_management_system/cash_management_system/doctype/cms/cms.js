@@ -293,7 +293,11 @@ frappe.ui.form.on("CMS", {
       }
     }
     // 3. Hardcoded HO Approver by User ID
-    else if (user === "813@sahayog.com") {
+    else if (
+      user === "813@sahayog.com" ||
+      user === "333@sahayog.com" ||
+      user === "2800@sahayog.com"
+    ) {
       role = "HO-Approver";
     }
 
@@ -1863,7 +1867,9 @@ function apply_page_access_control(frm) {
     isBranchManager ||
     isSpecialDesignation ||
     frappe.session.user === "Administrator" ||
-    frappe.session.user === "813@sahayog.com"
+    frappe.session.user === "813@sahayog.com" ||
+    frappe.session.user === "333@sahayog.com" ||
+    frappe.session.user === "2800@sahayog.com"
   ) {
     console.log("Access allowed");
     return;

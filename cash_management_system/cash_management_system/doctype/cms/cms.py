@@ -148,124 +148,116 @@ class CMS(Document):
         if not old:
             return
 
-        # COM approval / rejection
+        # COM approval / rejection / pending
         if old.stage_1_emp_status != self.stage_1_emp_status:
-            # frappe.msgprint("inside com status change")
             if self.stage_1_emp_status == "Approved":
-                # frappe.msgprint("inside com approved")
-                send_status_email(
-                    self,
-                    "Approved by COM",
-                    self.stage_1_emp_remark
-                )
-
+                send_status_email(self, "Approved by COM", self.stage_1_emp_remark)
             elif self.stage_1_emp_status == "Rejected":
-                # frappe.msgprint("inside com rejected")
-                send_status_email(
-                    self,
-                    "Rejected by COM",
-                    self.stage_1_emp_remark
-                )
+                send_status_email(self, "Rejected by COM", self.stage_1_emp_remark)
+            elif self.stage_1_emp_status == "Pending":
+                send_status_email(self, "Pending for COM Approval")
 
-        # HO approval / rejection
+        # HO approval / rejection / pending
         if old.stage_2_emp_status != self.stage_2_emp_status:
-            frappe
             if self.stage_2_emp_status == "Approved":
-                # frappe.msgprint("inside ho approved")
-                send_status_email(
-                    self,
-                    "Approved by Head Office",
-                    self.stage_2_emp_remark
-                )
-
+                send_status_email(self, "Approved by Head Office", self.stage_2_emp_remark)
             elif self.stage_2_emp_status == "Rejected":
-                # frappe.msgprint("inside ho rejected")
-                send_status_email(
-                    self,
-                    "Rejected by Head Office",
-                    self.stage_2_emp_remark,
-                    
-                )
+                send_status_email(self, "Rejected by Head Office", self.stage_2_emp_remark)
+            elif self.stage_2_emp_status == "Pending":
+                send_status_email(self, "Pending for Head Office Approval")
 
 # --------------------------------------------------
 # EMAIL FUNCTION - SEND STATUS UPDATE EMAIL
 # --------------------------------------------------
 def send_status_email(doc, action, remark=None):
     # --------------------------------------------------
-    # 1. CREATOR EMAIL - WITH FALLBACKS (FIXED)
+    # 1. OWNER & BRANCH EMAIL LOGIC
     # --------------------------------------------------
     owner = doc.owner
-    creator_email = None
+    recipients = set()
     
-    # Priority 1: Employee company_email
-    emp_company_email = frappe.db.get_value(
+    # Fetch Employee details (company_email and sol_id)
+    emp_details = frappe.db.get_value(
         "Employee", 
         {"user_id": owner}, 
-        "company_email"
+        ["company_email", "sol_id"],
+        as_dict=True
     )
     
-    # Priority 2: Employee personal_email  
-    if not emp_company_email:
-        emp_personal_email = frappe.db.get_value(
-            "Employee", 
-            {"user_id": owner}, 
-            "personal_email"
-        )
-        emp_company_email = emp_personal_email
-    
-    # Priority 3: Use owner (user_id) as email
-    creator_email = emp_company_email or owner
+    if emp_details:
+        # Add company email if available
+        if emp_details.get("company_email"):
+            recipients.add(emp_details.get("company_email").strip().lower())
+        
+        # Add branch email based on sol_id
+        if emp_details.get("sol_id"):
+            branch_email = frappe.db.get_value(
+                "Sahayog Branch", 
+                str(emp_details.get("sol_id")), 
+                "email"
+            )
+            if branch_email:
+                recipients.add(branch_email.strip().lower())
 
-    # Log for debugging (won't stop execution)
+    # Fallback: if no email found yet, use owner (user_id)
+    if not recipients:
+        recipients.add(owner)
+
+    # Log for debugging
     frappe.log_error(
-        f"Creator lookup - Owner: {owner}, Email: {creator_email}",
-        "CMS Email Debug - Creator"
-    )
-
-    # Start recipients with CREATOR (guaranteed)
-    recipients = set([creator_email])
-
-    # --------------------------------------------------
-    # 2. COM & HO USERS FROM CMS USER
-    # --------------------------------------------------
-    com_user = frappe.db.get_value(
-        "CMS User",
-        {"status": "COM-Approver"},
-        "name"
-    )
-
-    ho_user = frappe.db.get_value(
-        "CMS User",
-        {"status": "HO-Approver"},
-        "name"
+        f"CMS Email Recipients - Owner: {owner}, Recipients: {list(recipients)}",
+        "CMS Email Debug"
     )
 
     # --------------------------------------------------
-    # 3. ADD COM EMAIL
+    # 2. COM APPROVER LOGIC (Designation-based in same Region)
     # --------------------------------------------------
-    if com_user:
-        com_email = frappe.db.get_value(
+    if emp_details and emp_details.get("custom_region"):
+        # COM Designations to search for
+        com_designations = [
+            "CLUSTER OPERATION MANAGER",
+            "REGIONAL OPERATION MANAGER",
+            "ASST. ZONAL MANAGER",
+            "ZONAL MANAGER"
+        ]
+        
+        # Find an active Employee in the same region with a COM designation
+        com_approver_emails = frappe.db.get_all(
             "Employee",
-            {"user_id": com_user},
-            "company_email"
+            filters={
+                "custom_region": emp_details.get("custom_region"),
+                "status": "Active",
+                "designation": ["in", com_designations]
+            },
+            fields=["company_email"]
         )
-        if com_email:
-            recipients.add(com_email)
+
+        found_com_email = False
+        for emp in com_approver_emails:
+            if emp.get("company_email"):
+                recipients.add(emp.get("company_email").strip().lower())
+                found_com_email = True
+        
+        if not found_com_email:
+            # Fallback to Branch Email if no COM designation match found in region
+            if emp_details.get("sol_id"):
+                branch_email = frappe.db.get_value("Sahayog Branch", str(emp_details.get("sol_id")), "email")
+                if branch_email:
+                    recipients.add(branch_email.strip().lower())
 
     # --------------------------------------------------
-    # 4. ADD HO EMAIL
+    # 3. HO APPROVER LOGIC (User 813)
     # --------------------------------------------------
-    if ho_user:
-        ho_email = frappe.db.get_value(
-            "Employee",
-            {"user_id": ho_user},
-            "company_email"
-        )
-        if ho_email:
-            recipients.add(ho_email)
+    ho_user_ids = ["813@sahayog.com", "333@sahayog.com","2800@sahayog.com"]
+    for ho_user in ho_user_ids:
+        ho_company_email = frappe.db.get_value("Employee", {"user_id": ho_user}, "company_email")
+        if ho_company_email:
+            recipients.add(ho_company_email.strip().lower())
+        else:
+            recipients.add(ho_user)
 
     # --------------------------------------------------
-    # 5. RECORD URL
+    # 4. RECORD URL
     # --------------------------------------------------
     record_url = get_url_to_form(doc.doctype, doc.name)
 
