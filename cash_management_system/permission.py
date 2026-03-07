@@ -14,14 +14,14 @@ def cms_permission_query(user):
     employee = frappe.db.get_value(
         "Employee",
         {"user_id": user},
-        ["custom_region", "designation"],
+        ["custom_zone", "designation"],
         as_dict=True
     )
 
     if not employee:
         return "1 = 0"
 
-    user_region = employee.custom_region
+    user_zone = employee.custom_zone
     designation = (employee.designation or "").upper()
 
     # -------------------------------------------------
@@ -66,7 +66,7 @@ def cms_permission_query(user):
                 FROM `tabEmployee` e
                 WHERE
                     e.user_id = `tabCMS`.owner
-                    AND e.custom_region = '{user_region}'
+                    AND e.custom_zone = '{user_zone}'
             )
         """)
 
