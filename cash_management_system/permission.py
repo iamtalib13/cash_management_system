@@ -4,8 +4,8 @@ def cms_permission_query(user):
     # -------------------------------------------------
     # 1. Administrator & HO Approver → full access
     # -------------------------------------------------
-    ho_approver_id = "813@sahayog.com"
-    if user in ["Administrator", ho_approver_id]:
+    ho_approver_ids = ["813@sahayog.com", "333@sahayog.com", "2800@sahayog.com"]
+    if user in ["Administrator"] + ho_approver_ids:
         return ""
 
     # -------------------------------------------------

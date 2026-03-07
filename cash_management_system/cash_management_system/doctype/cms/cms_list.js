@@ -17,7 +17,12 @@ frappe.listview_settings["CMS"] = {
     const user = frappe.session.user;
 
     // ✅ Bypass for Administrator and HO-Approver
-    if (user === "Administrator" || user === "813@sahayog.com") {
+    if (
+      user === "Administrator" ||
+      user === "813@sahayog.com" ||
+      user === "333@sahayog.com" ||
+      user === "2800@sahayog.com"
+    ) {
       return;
     }
 

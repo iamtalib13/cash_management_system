@@ -248,12 +248,13 @@ def send_status_email(doc, action, remark=None):
     # --------------------------------------------------
     # 3. HO APPROVER LOGIC (User 813)
     # --------------------------------------------------
-    ho_user_id = "813@sahayog.com"
-    ho_company_email = frappe.db.get_value("Employee", {"user_id": ho_user_id}, "company_email")
-    if ho_company_email:
-        recipients.add(ho_company_email.strip().lower())
-    else:
-        recipients.add(ho_user_id)
+    ho_user_ids = ["813@sahayog.com", "333@sahayog.com","2800@sahayog.com"]
+    for ho_user in ho_user_ids:
+        ho_company_email = frappe.db.get_value("Employee", {"user_id": ho_user}, "company_email")
+        if ho_company_email:
+            recipients.add(ho_company_email.strip().lower())
+        else:
+            recipients.add(ho_user)
 
     # --------------------------------------------------
     # 4. RECORD URL
