@@ -870,29 +870,20 @@ frappe.ui.form.on("CMS", {
                   return;
                 }
 
-                frappe.db
-                  .get_value("Employee", { user_id: r.message.user }, "name")
-                  .then((emp) => {
-                    if (!emp.message) {
-                      frappe.msgprint("Employee not found for COM Approver");
-                      return;
-                    }
+                // ✅ NOW update workflow fields
+                frm.set_value("stage_1_emp_user", r.message.user);
+                frm.set_value("stage_1_emp_status", "Pending");
+                frm.set_value("status", "Pending");
 
-                    // ✅ NOW update workflow fields
-                    frm.set_value("stage_1_emp_user", emp.message.name);
-                    frm.set_value("stage_1_emp_status", "Pending");
-                    frm.set_value("status", "Pending");
-
-                    frm.save().then(() => {
-                      frappe.show_alert(
-                        {
-                          message: "Form submitted successfully",
-                          indicator: "green",
-                        },
-                        8,
-                      );
-                    });
-                  });
+                frm.save().then(() => {
+                  frappe.show_alert(
+                    {
+                      message: "Form submitted successfully",
+                      indicator: "green",
+                    },
+                    8,
+                  );
+                });
               });
           })
           .catch(() => {
@@ -911,8 +902,9 @@ frappe.ui.form.on("CMS", {
     let fullName = "";
     let hofullName = "";
 
-    let comID = com ? com.match(/^\d+/)[0] : null;
-    let hoID = ho ? ho.match(/^\d+/)[0] : null;
+    // Robust extraction of ID (handles both numeric IDs and emails)
+    let comID = com ? com.split('@')[0] : null;
+    let hoID = ho ? ho.split('@')[0] : null;
 
     console.log("com extracted number -", comID);
     console.log("ho extracted number -", hoID);

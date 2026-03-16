@@ -1,23 +1,17 @@
-# Copyright (c) 2024, Talib Sheikh and contributors
-# For license information, please see license.txt
-
 import frappe
 from frappe.model.document import Document
 from frappe import _
-from frappe.utils import nowdate
-from frappe.utils.pdf import get_pdf  # Import get_pdf directly
-from frappe.utils import now_datetime
-from frappe.utils import escape_html
-import frappe
-from frappe.utils import date_diff, nowdate
-from frappe.utils import now_datetime, get_url_to_form
-import frappe
-from frappe.utils import now_datetime
-import frappe
-from frappe.utils import get_url_to_form
-import frappe
-from frappe.utils import get_url_to_form, escape_html
-from frappe.utils import nowdate, add_days, getdate
+from frappe.utils import (
+    nowdate, 
+    now_datetime, 
+    escape_html, 
+    date_diff, 
+    get_url_to_form, 
+    add_days, 
+    getdate,
+    flt
+)
+from frappe.utils.pdf import get_pdf
 
 class CMS(Document):
     def check_cheque_details(self, mandatory=False):
@@ -80,24 +74,17 @@ class CMS(Document):
                    
     def set_com_email(self):
         self.stage_1_emp_user = self.get_com(self.branch)  
-        # Fetch the employee's email where user_id matches self.stage_1_emp_user
-        com_email = frappe.db.get_value('Employee', {'user_id': self.stage_1_emp_user}, 'company_email')
         
-        # Set the email value if found
-        if com_email:
-            self.com_email = com_email
-        # else:
-            # frappe.msgprint(f"No email found for user: {self.com_email}")
-        # Convert fields to uppercase if they exist
-        # if self.ifsc_code:
-        #     self.ifsc_code = self.ifsc_code.upper()
-        # if self.account_number:
-        #     self.account_number = self.account_number.upper()
-        # if self.cheque_number:
-        #     self.cheque_number = self.cheque_number.upper()
+        if self.stage_1_emp_user:
+            # Fetch the employee's email using the User ID (stage_1_emp_user)
+            com_email = frappe.db.get_value('Employee', {'user_id': self.stage_1_emp_user}, 'company_email')
+            
+            if com_email:
+                self.com_email = com_email
+            else:
+                # If no employee email, use the user ID itself as a fallback
+                self.com_email = self.stage_1_emp_user
 
-        # Set the stage_1_emp_user field using the get_com method
-         
     def check_transaction_date(self):
         # Get the previous status if it exists
         old_status = self._doc_before_save.status if self._doc_before_save else None
@@ -130,22 +117,19 @@ class CMS(Document):
             )
 
     def get_com(self, branch):
-    
-        # Fetch the 'employee' field from the 'COM Mapping' doctype based on the branch
-        com = frappe.db.get_value('COM Mapping', branch, 'employee')
-        
-        # If com is found, concatenate it with '@sahayog.com'
-        if com:
-            return f"{com}@sahayog.com"
-        
-        # If com is not found, return None
-        return None
+        # Fetch the 'employee' field (which is a User ID) from the 'COM Mapping' doctype based on the branch
+        return frappe.db.get_value('COM Mapping', branch, 'employee')
+
     # --------------------------------------------------
     # EMAIL TRIGGERS every tine the request change the status (SAFE & RELIABLE)
     # --------------------------------------------------
     def on_update(self):
         old = self._doc_before_save
+        
+        # If it's a new document being submitted directly to Pending
         if not old:
+            if self.stage_1_emp_status == "Pending":
+                send_status_email(self, "Pending for COM Approval")
             return
 
         # COM approval / rejection / pending
@@ -167,6 +151,39 @@ class CMS(Document):
                 send_status_email(self, "Pending for Head Office Approval")
 
 # --------------------------------------------------
+# HELPER FUNCTION - GET BRANCH EMAIL WITH FUZZY MATCH
+# --------------------------------------------------
+def get_branch_email_by_name(branch_name):
+    """
+    Fetch branch email with flexible matching (case-insensitive, partial match).
+    """
+    if not branch_name:
+        return None
+    
+    # Method 1: Exact match
+    branch_email = frappe.db.get_value("Sahayog Branch", branch_name, "email")
+    if branch_email:
+        return branch_email
+    
+    # Method 2: Case-insensitive partial match
+    all_branches = frappe.db.get_all("Sahayog Branch", fields=["name", "email"])
+    branch_name_lower = branch_name.lower().strip()
+    
+    for branch in all_branches:
+        branch_name_db = branch.name.lower().strip()
+        if branch_name_lower in branch_name_db or branch_name_db in branch_name_lower:
+            if branch.email:
+                return branch.email
+    
+    # Method 3: Try matching by sol_id if branch_name is numeric
+    if branch_name.isdigit():
+        branch_email = frappe.db.get_value("Sahayog Branch", branch_name, "email")
+        if branch_email:
+            return branch_email
+    
+    return None
+
+# --------------------------------------------------
 # EMAIL FUNCTION - SEND STATUS UPDATE EMAIL
 # --------------------------------------------------
 def send_status_email(doc, action, remark=None):
@@ -175,27 +192,34 @@ def send_status_email(doc, action, remark=None):
     # --------------------------------------------------
     owner = doc.owner
     recipients = set()
-    
-    # Fetch Employee details (company_email and sol_id)
+
+    # Fetch Employee details (company_email, sol_id, and sahayog_branch)
     emp_details = frappe.db.get_value(
-        "Employee", 
-        {"user_id": owner}, 
-        ["company_email", "sol_id"],
+        "Employee",
+        {"user_id": owner},
+        ["company_email", "sol_id", "sahayog_branch", "custom_region"],
         as_dict=True
     )
-    
+
     if emp_details:
         # Add company email if available
         if emp_details.get("company_email"):
             recipients.add(emp_details.get("company_email").strip().lower())
-        
+
         # Add branch email based on sol_id
         if emp_details.get("sol_id"):
             branch_email = frappe.db.get_value(
-                "Sahayog Branch", 
-                str(emp_details.get("sol_id")), 
+                "Sahayog Branch",
+                str(emp_details.get("sol_id")),
                 "email"
             )
+            if branch_email:
+                recipients.add(branch_email.strip().lower())
+
+    # If no email found yet, check employee.sahayog_branch → Sahayog Branch email
+    if not recipients:
+        if emp_details and emp_details.get("sahayog_branch"):
+            branch_email = get_branch_email_by_name(emp_details.get("sahayog_branch"))
             if branch_email:
                 recipients.add(branch_email.strip().lower())
 
@@ -205,13 +229,21 @@ def send_status_email(doc, action, remark=None):
 
     # Log for debugging
     frappe.log_error(
-        f"CMS Email Recipients - Owner: {owner}, Recipients: {list(recipients)}",
-        "CMS Email Debug"
+        title="CMS Email Debug",
+        message=f"CMS Email Recipients - Owner: {owner}, Recipients: {list(recipients)}"
     )
 
     # --------------------------------------------------
     # 2. COM APPROVER LOGIC (Designation-based in same Region)
     # --------------------------------------------------
+    found_com_email = False
+
+    # A. Use the specific COM Email stored in the document (if set)
+    if doc.com_email:
+        recipients.add(doc.com_email.strip().lower())
+        found_com_email = True
+
+    # B. Also look for regional COMs as additional recipients
     if emp_details and emp_details.get("custom_region"):
         # COM Designations to search for
         com_designations = [
@@ -232,18 +264,22 @@ def send_status_email(doc, action, remark=None):
             fields=["company_email"]
         )
 
-        found_com_email = False
         for emp in com_approver_emails:
             if emp.get("company_email"):
                 recipients.add(emp.get("company_email").strip().lower())
                 found_com_email = True
         
-        if not found_com_email:
-            # Fallback to Branch Email if no COM designation match found in region
-            if emp_details.get("sol_id"):
-                branch_email = frappe.db.get_value("Sahayog Branch", str(emp_details.get("sol_id")), "email")
-                if branch_email:
-                    recipients.add(branch_email.strip().lower())
+    if not found_com_email:
+        # Fallback to Branch Email if no COM designation match found in region
+        branch_email = None
+        if emp_details and emp_details.get("sol_id"):
+            branch_email = frappe.db.get_value("Sahayog Branch", str(emp_details.get("sol_id")), "email")
+        
+        if not branch_email and emp_details and emp_details.get("sahayog_branch"):
+            branch_email = get_branch_email_by_name(emp_details.get("sahayog_branch"))
+        
+        if branch_email:
+            recipients.add(branch_email.strip().lower())
 
     # --------------------------------------------------
     # 3. HO APPROVER LOGIC (User 813)
@@ -306,9 +342,15 @@ def send_status_email(doc, action, remark=None):
     # --------------------------------------------------
     # 8. EMAIL HTML - FIXED ESCAPING
     # --------------------------------------------------
-    safe_action = frappe.utils.escape_html(action or "")
-    safe_remark = frappe.utils.escape_html(remark or "")
+    safe_action = escape_html(action or "")
+    safe_remark = escape_html(remark or "")
     
+    # Debug logging to verify recipients
+    frappe.log_error(
+        title="CMS Email Debug",
+        message=f"Action: {action}, Recipients: {list(recipients)}"
+    )
+
     message = f"""
     <div style="font-family:Arial,Helvetica,sans-serif;background:#f3f4f6;padding:20px;">
       <div style="max-width:650px;margin:auto;background:white;
@@ -416,11 +458,11 @@ def get_pending_cms_requests():
 
     com_email = frappe.db.get_value(
         "Employee", {"user_id": com_user}, "company_email"
-    ) if com_user else None
+    ) or com_user if com_user else None
 
     ho_email = frappe.db.get_value(
         "Employee", {"user_id": ho_user}, "company_email"
-    ) if ho_user else None
+    ) or ho_user if ho_user else None
 
     now = now_datetime()
 
@@ -684,10 +726,16 @@ def send_cit_ack(cms_name):
     )
 
     if not recipients:
-        frappe.throw(
-            f"COM Approver found for branch {doc.requested_branch}, "
-            "but company email is not configured."
-        )
+        # FALLBACK: Try to get Branch Email if COM Employee email is missing
+        branch_email = get_branch_email_by_name(doc.requested_branch)
+        if branch_email:
+            recipients = [branch_email.strip().lower()]
+            recipient_names = [doc.requested_branch]
+        else:
+            frappe.throw(
+                f"COM Approver found for branch {doc.requested_branch}, "
+                "but company email and branch email are not configured."
+            )
 
     # ---------------------------------
     # 5. Update ACK details
