@@ -14,7 +14,7 @@ def cms_permission_query(user):
     employee = frappe.db.get_value(
         "Employee",
         {"user_id": user},
-        ["custom_zone", "designation"],
+        ["custom_zone", "designation", "branch"],
         as_dict=True
     )
 
@@ -22,6 +22,7 @@ def cms_permission_query(user):
         return "1 = 0"
 
     user_zone = employee.custom_zone
+    user_branch = employee.branch
     designation = (employee.designation or "").upper()
 
     # -------------------------------------------------
@@ -54,9 +55,16 @@ def cms_permission_query(user):
 
     # Own records (If designation is in requester or region list)
     is_requester_by_desig = any(d in designation for d in requester_designations)
-    
+
     if is_requester_by_desig or has_region_access:
         conditions.append(f"`tabCMS`.owner = '{user}'")
+
+    # Requester: Also show records where requested_branch matches employee's branch
+    if is_requester_by_desig and user_branch:
+        conditions.append(f"""
+            (`tabCMS`.requested_branch = '{user_branch}' 
+             AND `tabCMS`.transaction_category = 'CIT')
+        """)
 
     # Region records (COM / ZM / ROM)
     if has_region_access:
