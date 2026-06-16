@@ -20,6 +20,7 @@
   "date_of_request",
   "requested_branch",
   "acknowledged",
+  "attach_cheque",
   "column_break_wsdrj",
   "date_of_transaction",
   "transaction_type",
@@ -150,7 +151,7 @@
    "fieldtype": "Select",
    "in_list_view": 1,
    "label": "Transaction Category",
-   "options": "\nDEPOSIT\nWITHDRAWAL\nCIT",
+   "options": "\nDEPOSIT\nWITHDRAWAL\nCIT\nFund Required",
    "reqd": 1
   },
   {
@@ -201,7 +202,7 @@
    "fieldname": "status",
    "fieldtype": "Select",
    "label": "Status",
-   "options": "Draft\nPending\nApproved\nRejected\nCompleted"
+   "options": "Draft\nPending\nApproved\nRejected\nCancelled\nCompleted"
   },
   {
    "depends_on": "eval:doc.transaction_category === 'CIT';",
@@ -371,11 +372,16 @@
    "fieldtype": "Check",
    "label": "Acknowledged",
    "read_only_depends_on": "eval:frappe.session.user !== \"Administrator\"\n"
+  },
+  {
+   "fieldname": "attach_cheque",
+   "fieldtype": "Attach",
+   "label": "Attach Cheque"
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-02-12 11:46:55.477211",
+ "modified": "2026-06-16 13:38:17.492966",
  "modified_by": "Administrator",
  "module": "Cash Management System",
  "name": "CMS",

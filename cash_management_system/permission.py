@@ -77,6 +77,15 @@ def cms_permission_query(user):
                     AND e.custom_zone = '{user_zone}'
             )
         """)
+        
+    # Special rule: CIT + Gondia HO access for Creator, COM, and HO
+    # The current HO approver logic at the start of the function covers HO Approvers already.
+    # We need to add logic for Creator and COM for these specific records.
+    conditions.append(f"""
+        (`tabCMS`.transaction_category = 'CIT' 
+         AND `tabCMS`.requested_branch = 'Gondia HO'
+         AND (`tabCMS`.owner = '{user}' OR {str(has_region_access).lower()}))
+    """)
 
     # -------------------------------------------------
     # 7. Apply OR logic

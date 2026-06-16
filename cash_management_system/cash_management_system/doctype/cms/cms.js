@@ -96,6 +96,23 @@ frappe.ui.form.on("CMS", {
       }
     }
 
+    // Add Attach Cheque button
+    frm.add_custom_button(__("Attach Cheque"), function () {
+      if (frm.is_new()) {
+        frappe.msgprint(__("Please save the document before attaching files."));
+      } else {
+        frm.attachments.new_attachment();
+      }
+    });
+
+    // Add Cancel button only for APPROVED documents
+    if (frm.doc.status === "Approved") {
+      frm.add_custom_button(__("Cancel"), function () {
+        frm.set_value("status", "Cancelled");
+        frm.save();
+      });
+    }
+
     // Add Update Bank Details button for WITHDRAWAL or DEPOSIT
     if (
       ["WITHDRAWAL", "DEPOSIT"].includes(frm.doc.transaction_category) &&
@@ -105,6 +122,11 @@ frappe.ui.form.on("CMS", {
         frm.trigger("open_update_bank_details_dialog");
       });
     }
+  },
+
+  open_cheque_attachment_dialog: function (frm) {
+    // Use Frappe's standard form attachment dialog
+    frm.attachments.new_attachment();
   },
 
   open_update_bank_details_dialog: function (frm) {
