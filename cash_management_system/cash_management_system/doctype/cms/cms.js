@@ -105,6 +105,13 @@ frappe.ui.form.on("CMS", {
       }
     });
 
+    // Add Cancel button only for APPROVED documents
+    if (frm.doc.status === "Approved") {
+      frm.add_custom_button(__("Cancel"), function () {
+        frappe.msgprint(__("Cancel action not yet implemented."));
+      });
+    }
+
     // Add Update Bank Details button for WITHDRAWAL or DEPOSIT
     if (
       ["WITHDRAWAL", "DEPOSIT"].includes(frm.doc.transaction_category) &&
