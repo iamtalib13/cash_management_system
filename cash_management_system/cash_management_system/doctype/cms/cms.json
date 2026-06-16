@@ -151,7 +151,7 @@
    "fieldtype": "Select",
    "in_list_view": 1,
    "label": "Transaction Category",
-   "options": "\nDEPOSIT\nWITHDRAWAL\nCIT",
+   "options": "\nDEPOSIT\nWITHDRAWAL\nCIT\nFund Required",
    "reqd": 1
   },
   {
@@ -381,7 +381,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-06-16 13:35:31.864763",
+ "modified": "2026-06-16 13:38:17.492966",
  "modified_by": "Administrator",
  "module": "Cash Management System",
  "name": "CMS",
