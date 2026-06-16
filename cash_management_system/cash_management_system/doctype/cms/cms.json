@@ -202,7 +202,7 @@
    "fieldname": "status",
    "fieldtype": "Select",
    "label": "Status",
-   "options": "Draft\nPending\nApproved\nRejected\nCompleted"
+   "options": "Draft\nPending\nApproved\nRejected\nCancel\nCompleted"
   },
   {
    "depends_on": "eval:doc.transaction_category === 'CIT';",
@@ -323,7 +323,6 @@
    "depends_on": "eval:doc.transaction_receipt",
    "fieldname": "transaction_receipt",
    "fieldtype": "Attach",
-   "is_private": 0,
    "label": "Transaction Receipt"
   },
   {
@@ -377,13 +376,12 @@
   {
    "fieldname": "attach_cheque",
    "fieldtype": "Attach",
-   "is_private": 0,
    "label": "Attach Cheque"
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-06-16 11:55:48.515072",
+ "modified": "2026-06-16 13:21:32.804477",
  "modified_by": "Administrator",
  "module": "Cash Management System",
  "name": "CMS",
