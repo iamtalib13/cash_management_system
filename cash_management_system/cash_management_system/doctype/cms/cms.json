@@ -202,7 +202,7 @@
    "fieldname": "status",
    "fieldtype": "Select",
    "label": "Status",
-   "options": "Draft\nPending\nApproved\nRejected\nCancel\nCompleted"
+   "options": "Draft\nPending\nApproved\nRejected\nCancelled\nCompleted"
   },
   {
    "depends_on": "eval:doc.transaction_category === 'CIT';",
@@ -381,7 +381,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-06-16 13:21:32.804477",
+ "modified": "2026-06-16 13:35:31.864763",
  "modified_by": "Administrator",
  "module": "Cash Management System",
  "name": "CMS",
