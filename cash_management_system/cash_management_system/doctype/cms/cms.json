@@ -20,6 +20,7 @@
   "date_of_request",
   "requested_branch",
   "acknowledged",
+  "attach_cheque",
   "column_break_wsdrj",
   "date_of_transaction",
   "transaction_type",
@@ -322,6 +323,7 @@
    "depends_on": "eval:doc.transaction_receipt",
    "fieldname": "transaction_receipt",
    "fieldtype": "Attach",
+   "is_private": 0,
    "label": "Transaction Receipt"
   },
   {
@@ -371,11 +373,17 @@
    "fieldtype": "Check",
    "label": "Acknowledged",
    "read_only_depends_on": "eval:frappe.session.user !== \"Administrator\"\n"
+  },
+  {
+   "fieldname": "attach_cheque",
+   "fieldtype": "Attach",
+   "is_private": 0,
+   "label": "Attach Cheque"
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-02-12 11:46:55.477211",
+ "modified": "2026-06-16 11:55:48.515072",
  "modified_by": "Administrator",
  "module": "Cash Management System",
  "name": "CMS",
