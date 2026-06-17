@@ -376,12 +376,12 @@
   {
    "fieldname": "attach_cheque",
    "fieldtype": "Attach",
-   "label": "Attach Cheque"
+   "label": "Attach Cheque/Other documents"
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-06-17 11:21:34.955970",
+ "modified": "2026-06-17 12:42:28.766756",
  "modified_by": "Administrator",
  "module": "Cash Management System",
  "name": "CMS",
@@ -419,11 +419,7 @@
   },
   {
    "color": "Yellow",
-   "title": "COM Pending"
-  },
-  {
-   "color": "Orange",
-   "title": "HO Pending"
+   "title": "Pending"
   },
   {
    "color": "Cyan",
