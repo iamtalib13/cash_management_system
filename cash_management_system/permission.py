@@ -59,6 +59,10 @@ def cms_permission_query(user):
     if is_requester_by_desig or has_region_access:
         conditions.append(f"`tabCMS`.owner = '{user}'")
 
+    # Assigned Approver access (COM or HO)
+    conditions.append(f"`tabCMS`.stage_1_emp_user = '{user}'")
+    conditions.append(f"`tabCMS`.stage_2_emp_user = '{user}'")
+
     # Requester: Also show records where requested_branch matches employee's branch
     if is_requester_by_desig and user_branch:
         conditions.append(f"""

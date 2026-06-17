@@ -312,8 +312,11 @@ frappe.ui.form.on("CMS", {
     if (requesterDesignations.some((d) => userDesig.includes(d))) {
       role = "Requester";
     }
-    // 2. Check Designation for COM Approver
-    else if (comDesignations.some((d) => userDesig.includes(d))) {
+    // 2. Check Designation for COM Approver OR if explicitly assigned
+    else if (
+      comDesignations.some((d) => userDesig.includes(d)) ||
+      frm.doc.stage_1_emp_user === user
+    ) {
       // If owner or new, act as Requester to allow creation/submission
       if (frm.is_new() || frm.doc.owner === user) {
         role = "Requester";
@@ -321,11 +324,12 @@ frappe.ui.form.on("CMS", {
         role = "COM-Approver";
       }
     }
-    // 3. Hardcoded HO Approver by User ID
+    // 3. Hardcoded HO Approver by User ID OR if explicitly assigned
     else if (
       user === "813@sahayog.com" ||
       user === "333@sahayog.com" ||
-      user === "2800@sahayog.com"
+      user === "2800@sahayog.com" ||
+      frm.doc.stage_2_emp_user === user
     ) {
       role = "HO-Approver";
     }
