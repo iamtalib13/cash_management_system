@@ -56,6 +56,7 @@ frappe.ui.form.on("CMS", {
     }
     frm.trigger("role_check");
     frm.trigger("section_colors");
+    frm.disable_save();
     $("span.sidebar-toggle-btn").hide();
     $(".col-lg-2.layout-side-section").hide();
     frm.trigger("populate_employee_html");
@@ -279,6 +280,13 @@ frappe.ui.form.on("CMS", {
       frm._cms_role = "Administrator";
       frm.enable_save();
       frm.trigger("creator_submit_btn");
+
+      if (
+        frm.doc.status === "COM Pending" &&
+        frm.doc.stage_1_emp_status === "Pending"
+      ) {
+        frm.trigger("update_com_btn");
+      }
       return;
     }
 
@@ -305,8 +313,11 @@ frappe.ui.form.on("CMS", {
     if (requesterDesignations.some((d) => userDesig.includes(d))) {
       role = "Requester";
     }
-    // 2. Check Designation for COM Approver
-    else if (comDesignations.some((d) => userDesig.includes(d))) {
+    // 2. Check Designation for COM Approver OR if explicitly assigned
+    else if (
+      comDesignations.some((d) => userDesig.includes(d)) ||
+      frm.doc.stage_1_emp_user === user
+    ) {
       // If owner or new, act as Requester to allow creation/submission
       if (frm.is_new() || frm.doc.owner === user) {
         role = "Requester";
@@ -314,11 +325,12 @@ frappe.ui.form.on("CMS", {
         role = "COM-Approver";
       }
     }
-    // 3. Hardcoded HO Approver by User ID
+    // 3. Hardcoded HO Approver by User ID OR if explicitly assigned
     else if (
       user === "813@sahayog.com" ||
       user === "333@sahayog.com" ||
-      user === "2800@sahayog.com"
+      user === "2800@sahayog.com" ||
+      frm.doc.stage_2_emp_user === user
     ) {
       role = "HO-Approver";
     }
@@ -337,6 +349,13 @@ frappe.ui.form.on("CMS", {
         // ❌ Hide Submit in all other states
         frm.remove_custom_button("Submit");
         frm.disable_save();
+      }
+
+      if (
+        frm.doc.status === "COM Pending" &&
+        frm.doc.stage_1_emp_status === "Pending"
+      ) {
+        frm.trigger("update_com_btn");
       }
 
       if (frm.doc.status === "Approved") {
@@ -491,7 +510,7 @@ frappe.ui.form.on("CMS", {
     let stage_1_emp_remark = frm.doc.stage_1_emp_remark;
     let stage_2_emp_remark = frm.doc.stage_2_emp_remark;
     if (
-      frm.doc.status == "Pending" &&
+      frm.doc.status == "COM Pending" &&
       frm.doc.stage_1_emp_status == "Pending"
     ) {
       frm.set_intro(
@@ -863,6 +882,70 @@ frappe.ui.form.on("CMS", {
       );
     }
   },
+  update_com_btn: function (frm) {
+    frm.add_custom_button(__("Update the COM"), function () {
+      let d = new frappe.ui.Dialog({
+        title: __("Update the COM"),
+        fields: [
+          {
+            label: __("Select New COM"),
+            fieldname: "new_com",
+            fieldtype: "Link",
+            options: "Employee",
+            reqd: 1,
+            get_query: function () {
+              return {
+                filters: [
+                  [
+                    "designation",
+                    "in",
+                    [
+                      "CLUSTER OPERATION MANAGER",
+                      "REGIONAL OPERATION MANAGER",
+                      "ASST. ZONAL MANAGER",
+                      "ZONAL MANAGER",
+                    ],
+                  ],
+                ],
+              };
+            },
+          },
+        ],
+        primary_action_label: __("Update"),
+        primary_action: function (values) {
+          frappe.db.get_value("Employee", values.new_com, "user_id").then((r) => {
+            let user_id = r.message ? r.message.user_id : null;
+            if (!user_id) {
+              frappe.msgprint(
+                __("Selected employee does not have a linked User ID."),
+              );
+              return;
+            }
+            frappe.db
+              .set_value(
+                frm.doctype,
+                frm.docname,
+                "stage_1_emp_user",
+                user_id,
+              )
+              .then(() => {
+                frm.reload_doc();
+                frappe.show_alert(
+                  {
+                    message: __("COM updated successfully"),
+                    indicator: "green",
+                  },
+                  8,
+                );
+                d.hide();
+              });
+          });
+        },
+      });
+      d.show();
+    });
+    frm.change_custom_button_type("Update the COM", null, "info");
+  },
   creator_submit_btn: function (frm) {
     let transaction_category = frm.doc.transaction_category;
 
@@ -895,7 +978,7 @@ frappe.ui.form.on("CMS", {
                 // ✅ NOW update workflow fields
                 frm.set_value("stage_1_emp_user", r.message.user);
                 frm.set_value("stage_1_emp_status", "Pending");
-                frm.set_value("status", "Pending");
+                frm.set_value("status", "COM Pending");
 
                 frm.save().then(() => {
                   frappe.show_alert(
@@ -1013,7 +1096,7 @@ frappe.ui.form.on("CMS", {
     const step_4_status =
       frm.doc.status === "Rejected"
         ? "Disabled"
-        : getStatus(frm.doc.status, "Pending");
+        : getStatus(frm.doc.status, "COM Pending");
 
     console.log("Step 1:", step_1_status);
     console.log("Step 2:", step_2_status);
@@ -1076,7 +1159,7 @@ frappe.ui.form.on("CMS", {
               top: 20px;
               left: 50px;
               right: 50px;
-              height: 8px;
+              height: 4px;
               background-color: #e0e0e0;
             }
             .progress-bar {

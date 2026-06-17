@@ -39,7 +39,7 @@ frappe.query_reports["Cash Movment"] = {
       fieldname: "status",
       label: __("Status"),
       fieldtype: "Select",
-      options: "\nDraft\nPending\nApproved\nRejected\nCompleted",
+      options: "\nDraft\nCOM Pending\nHO Pending\nApproved\nRejected\nCompleted",
     },
   ],
 };
