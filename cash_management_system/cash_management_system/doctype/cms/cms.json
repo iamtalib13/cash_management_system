@@ -202,7 +202,7 @@
    "fieldname": "status",
    "fieldtype": "Select",
    "label": "Status",
-   "options": "Draft\nPending\nApproved\nRejected\nCancelled\nCompleted"
+   "options": "Draft\nCOM Pending\nHO Pending\nApproved\nRejected\nCancelled\nCompleted"
   },
   {
    "depends_on": "eval:doc.transaction_category === 'CIT';",
@@ -381,7 +381,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-06-16 13:38:17.492966",
+ "modified": "2026-06-17 11:21:34.955970",
  "modified_by": "Administrator",
  "module": "Cash Management System",
  "name": "CMS",
@@ -419,7 +419,11 @@
   },
   {
    "color": "Yellow",
-   "title": "Pending"
+   "title": "COM Pending"
+  },
+  {
+   "color": "Orange",
+   "title": "HO Pending"
   },
   {
    "color": "Cyan",

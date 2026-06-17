@@ -89,9 +89,9 @@ class CMS(Document):
         # Get the previous status if it exists
         old_status = self._doc_before_save.status if self._doc_before_save else None
 
-        # Only check if date is in the past during initial submission (Draft -> Pending)
+        # Only check if date is in the past during initial submission (Draft -> COM Pending)
         # or while still in Draft. Skip for all other approval stages.
-        is_initial_submission = (self.status == "Pending" and (not old_status or old_status == "Draft"))
+        is_initial_submission = (self.status == "COM Pending" and (not old_status or old_status == "Draft"))
         
         if self.status == "Draft" or is_initial_submission:
             # Today's date
@@ -304,7 +304,9 @@ def send_status_email(doc, action, remark=None):
         color = {
             "Approved": "#16a34a",
             "Rejected": "#dc2626", 
-            "Pending": "#f59e0b"
+            "Pending": "#f59e0b",
+            "COM Pending": "#f59e0b",
+            "HO Pending": "#f59e0b"
         }.get(status, "#9ca3af")
 
         return f"""
@@ -442,7 +444,7 @@ def get_pending_cms_requests():
 
     cms_docs = frappe.get_all(
         "CMS",
-        filters={"status": "Pending"},
+        filters={"status": ["in", ["COM Pending", "HO Pending"]]},
         fields=[
             "name",
             "transaction_category",

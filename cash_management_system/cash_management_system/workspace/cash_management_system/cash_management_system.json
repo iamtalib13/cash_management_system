@@ -1,6 +1,6 @@
 {
  "charts": [],
- "content": "[{\"id\":\"MD0p44TE9b\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Create CMS\",\"col\":3}},{\"id\":\"_dKmg1RwfP\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"CMS List\",\"col\":3}},{\"id\":\"enWWSN30-4\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"CMS Report\",\"col\":3}},{\"id\":\"1EDI4Ipm1D\",\"type\":\"spacer\",\"data\":{\"col\":12}},{\"id\":\"MlMDlqDyfN\",\"type\":\"quick_list\",\"data\":{\"quick_list_name\":\"Draft\",\"col\":4}},{\"id\":\"Vwgkjfn9qQ\",\"type\":\"quick_list\",\"data\":{\"quick_list_name\":\" Pending\",\"col\":4}},{\"id\":\"YMWDxWbnif\",\"type\":\"quick_list\",\"data\":{\"quick_list_name\":\"Approved\",\"col\":4}},{\"id\":\"i9Bon2DiiL\",\"type\":\"quick_list\",\"data\":{\"quick_list_name\":\"Rejected\",\"col\":4}}]",
+ "content": "[{\"id\":\"MD0p44TE9b\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Create CMS\",\"col\":3}},{\"id\":\"_dKmg1RwfP\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"CMS List\",\"col\":3}},{\"id\":\"enWWSN30-4\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"CMS Report\",\"col\":3}},{\"id\":\"1EDI4Ipm1D\",\"type\":\"spacer\",\"data\":{\"col\":12}},{\"id\":\"MlMDlqDyfN\",\"type\":\"quick_list\",\"data\":{\"quick_list_name\":\"Draft\",\"col\":4}},{\"id\":\"Vwgkjfn9qQ\",\"type\":\"quick_list\",\"data\":{\"quick_list_name\":\"COM Pending\",\"col\":4}},{\"id\":\"YMWDxWbnif\",\"type\":\"quick_list\",\"data\":{\"quick_list_name\":\"Approved\",\"col\":4}},{\"id\":\"i9Bon2DiiL\",\"type\":\"quick_list\",\"data\":{\"quick_list_name\":\"Rejected\",\"col\":4}}]",
  "creation": "2026-01-15 11:38:23.145241",
  "custom_blocks": [],
  "docstatus": 0,
@@ -34,8 +34,13 @@
   },
   {
    "document_type": "CMS",
-   "label": " Pending",
-   "quick_list_filter": "[[\"CMS\",\"status\",\"=\",\"Pending\",false]]"
+   "label": "COM Pending",
+   "quick_list_filter": "[[\"CMS\",\"status\",\"=\",\"COM Pending\",false]]"
+  },
+  {
+   "document_type": "CMS",
+   "label": "HO Pending",
+   "quick_list_filter": "[[\"CMS\",\"status\",\"=\",\"HO Pending\",false]]"
   },
   {
    "document_type": "CMS",

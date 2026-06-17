@@ -281,7 +281,7 @@ frappe.ui.form.on("CMS", {
       frm.trigger("creator_submit_btn");
 
       if (
-        frm.doc.status === "Pending" &&
+        frm.doc.status === "COM Pending" &&
         frm.doc.stage_1_emp_status === "Pending"
       ) {
         frm.trigger("update_com_btn");
@@ -351,7 +351,7 @@ frappe.ui.form.on("CMS", {
       }
 
       if (
-        frm.doc.status === "Pending" &&
+        frm.doc.status === "COM Pending" &&
         frm.doc.stage_1_emp_status === "Pending"
       ) {
         frm.trigger("update_com_btn");
@@ -509,7 +509,7 @@ frappe.ui.form.on("CMS", {
     let stage_1_emp_remark = frm.doc.stage_1_emp_remark;
     let stage_2_emp_remark = frm.doc.stage_2_emp_remark;
     if (
-      frm.doc.status == "Pending" &&
+      frm.doc.status == "COM Pending" &&
       frm.doc.stage_1_emp_status == "Pending"
     ) {
       frm.set_intro(
@@ -977,7 +977,7 @@ frappe.ui.form.on("CMS", {
                 // ✅ NOW update workflow fields
                 frm.set_value("stage_1_emp_user", r.message.user);
                 frm.set_value("stage_1_emp_status", "Pending");
-                frm.set_value("status", "Pending");
+                frm.set_value("status", "COM Pending");
 
                 frm.save().then(() => {
                   frappe.show_alert(
@@ -1095,7 +1095,7 @@ frappe.ui.form.on("CMS", {
     const step_4_status =
       frm.doc.status === "Rejected"
         ? "Disabled"
-        : getStatus(frm.doc.status, "Pending");
+        : getStatus(frm.doc.status, "COM Pending");
 
     console.log("Step 1:", step_1_status);
     console.log("Step 2:", step_2_status);
