@@ -279,6 +279,13 @@ frappe.ui.form.on("CMS", {
       frm._cms_role = "Administrator";
       frm.enable_save();
       frm.trigger("creator_submit_btn");
+
+      if (
+        frm.doc.status === "Pending" &&
+        frm.doc.stage_1_emp_status === "Pending"
+      ) {
+        frm.trigger("update_com_btn");
+      }
       return;
     }
 
@@ -337,6 +344,13 @@ frappe.ui.form.on("CMS", {
         // ❌ Hide Submit in all other states
         frm.remove_custom_button("Submit");
         frm.disable_save();
+      }
+
+      if (
+        frm.doc.status === "Pending" &&
+        frm.doc.stage_1_emp_status === "Pending"
+      ) {
+        frm.trigger("update_com_btn");
       }
 
       if (frm.doc.status === "Approved") {
@@ -862,6 +876,70 @@ frappe.ui.form.on("CMS", {
         "red",
       );
     }
+  },
+  update_com_btn: function (frm) {
+    frm.add_custom_button(__("Update the COM"), function () {
+      let d = new frappe.ui.Dialog({
+        title: __("Update the COM"),
+        fields: [
+          {
+            label: __("Select New COM"),
+            fieldname: "new_com",
+            fieldtype: "Link",
+            options: "Employee",
+            reqd: 1,
+            get_query: function () {
+              return {
+                filters: [
+                  [
+                    "designation",
+                    "in",
+                    [
+                      "CLUSTER OPERATION MANAGER",
+                      "REGIONAL OPERATION MANAGER",
+                      "ASST. ZONAL MANAGER",
+                      "ZONAL MANAGER",
+                    ],
+                  ],
+                ],
+              };
+            },
+          },
+        ],
+        primary_action_label: __("Update"),
+        primary_action: function (values) {
+          frappe.db.get_value("Employee", values.new_com, "user_id").then((r) => {
+            let user_id = r.message ? r.message.user_id : null;
+            if (!user_id) {
+              frappe.msgprint(
+                __("Selected employee does not have a linked User ID."),
+              );
+              return;
+            }
+            frappe.db
+              .set_value(
+                frm.doctype,
+                frm.docname,
+                "stage_1_emp_user",
+                user_id,
+              )
+              .then(() => {
+                frm.reload_doc();
+                frappe.show_alert(
+                  {
+                    message: __("COM updated successfully"),
+                    indicator: "green",
+                  },
+                  8,
+                );
+                d.hide();
+              });
+          });
+        },
+      });
+      d.show();
+    });
+    frm.change_custom_button_type("Update the COM", null, "info");
   },
   creator_submit_btn: function (frm) {
     let transaction_category = frm.doc.transaction_category;
