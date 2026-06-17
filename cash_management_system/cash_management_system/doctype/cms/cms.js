@@ -56,6 +56,7 @@ frappe.ui.form.on("CMS", {
     }
     frm.trigger("role_check");
     frm.trigger("section_colors");
+    frm.disable_save();
     $("span.sidebar-toggle-btn").hide();
     $(".col-lg-2.layout-side-section").hide();
     frm.trigger("populate_employee_html");
