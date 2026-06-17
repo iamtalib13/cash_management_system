@@ -1159,7 +1159,7 @@ frappe.ui.form.on("CMS", {
               top: 20px;
               left: 50px;
               right: 50px;
-              height: 8px;
+              height: 4px;
               background-color: #e0e0e0;
             }
             .progress-bar {
