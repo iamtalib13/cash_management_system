@@ -304,6 +304,9 @@ frappe.ui.form.on("CMS", {
       "REGIONAL OPERATION MANAGER",
       "ASST. ZONAL MANAGER",
       "ZONAL MANAGER",
+      "SR. CLUSTER OPERATION MANAGER",
+      "SR.CLUSTER OPERATION MANAGER",
+      "SR. ZONAL MANAGER",
     ];
 
     let role = null;
@@ -905,6 +908,9 @@ frappe.ui.form.on("CMS", {
                       "REGIONAL OPERATION MANAGER",
                       "ASST. ZONAL MANAGER",
                       "ZONAL MANAGER",
+                      "SR. CLUSTER OPERATION MANAGER",
+                      "SR.CLUSTER OPERATION MANAGER",
+                      "SR. ZONAL MANAGER",
                     ],
                   ],
                 ],
@@ -1955,6 +1961,9 @@ function apply_page_access_control(frm) {
     "REGIONAL OPERATION MANAGER",
     "ASST. ZONAL MANAGER",
     "ZONAL MANAGER",
+    "SR. CLUSTER OPERATION MANAGER",
+    "SR.CLUSTER OPERATION MANAGER",
+    "SR. ZONAL MANAGER",
     "AGM",
   ];
 

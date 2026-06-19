@@ -51,6 +51,9 @@ frappe.listview_settings["CMS"] = {
           "CLUSTER OPERATION MANAGER",
           "ASST. ZONAL MANAGER",
           "ZONAL MANAGER",
+          "SR. CLUSTER OPERATION MANAGER",
+          "SR.CLUSTER OPERATION MANAGER",
+          "SR. ZONAL MANAGER",
           "ASST. BRANCH MANAGER",
         ];
 

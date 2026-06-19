@@ -32,7 +32,10 @@ def cms_permission_query(user):
         "CLUSTER OPERATION MANAGER",
         "REGIONAL OPERATION MANAGER",
         "ASST. ZONAL MANAGER",
-        "ZONAL MANAGER"
+        "ZONAL MANAGER",
+        "SR. CLUSTER OPERATION MANAGER",
+        "SR.CLUSTER OPERATION MANAGER",
+        "SR. ZONAL MANAGER"
     }
 
     # If the user's designation is in the list, they act as a COM/Regional approver

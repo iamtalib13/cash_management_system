@@ -250,7 +250,10 @@ def send_status_email(doc, action, remark=None):
             "CLUSTER OPERATION MANAGER",
             "REGIONAL OPERATION MANAGER",
             "ASST. ZONAL MANAGER",
-            "ZONAL MANAGER"
+            "ZONAL MANAGER",
+            "SR. CLUSTER OPERATION MANAGER",
+            "SR.CLUSTER OPERATION MANAGER",
+            "SR. ZONAL MANAGER"
         ]
         
         # Find an active Employee in the same region and zone with a COM designation
