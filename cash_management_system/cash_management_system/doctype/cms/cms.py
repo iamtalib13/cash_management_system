@@ -197,7 +197,7 @@ def send_status_email(doc, action, remark=None):
     emp_details = frappe.db.get_value(
         "Employee",
         {"user_id": owner},
-        ["company_email", "sol_id", "sahayog_branch", "custom_region"],
+        ["company_email", "sol_id", "sahayog_branch", "custom_region", "custom_zone"],
         as_dict=True
     )
 
@@ -244,7 +244,7 @@ def send_status_email(doc, action, remark=None):
         found_com_email = True
 
     # B. Also look for regional COMs as additional recipients
-    if emp_details and emp_details.get("custom_region"):
+    if emp_details and emp_details.get("custom_region") and emp_details.get("custom_zone"):
         # COM Designations to search for
         com_designations = [
             "CLUSTER OPERATION MANAGER",
@@ -253,11 +253,12 @@ def send_status_email(doc, action, remark=None):
             "ZONAL MANAGER"
         ]
         
-        # Find an active Employee in the same region with a COM designation
+        # Find an active Employee in the same region and zone with a COM designation
         com_approver_emails = frappe.db.get_all(
             "Employee",
             filters={
                 "custom_region": emp_details.get("custom_region"),
+                "custom_zone": emp_details.get("custom_zone"),
                 "status": "Active",
                 "designation": ["in", com_designations]
             },
