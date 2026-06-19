@@ -771,6 +771,7 @@ frappe.ui.form.on("CMS", {
             // Set the approval status and remarks
             frm.set_value("stage_1_emp_status", "Approved");
             frm.set_value("stage_2_emp_status", "Pending");
+            frm.set_value("status", "HO Pending");
             frm.set_value(
               "stage_1_emp_remark",
               approvalDialog.fields_dict.stage_1_emp_remark.get_value(),
@@ -913,33 +914,35 @@ frappe.ui.form.on("CMS", {
         ],
         primary_action_label: __("Update"),
         primary_action: function (values) {
-          frappe.db.get_value("Employee", values.new_com, "user_id").then((r) => {
-            let user_id = r.message ? r.message.user_id : null;
-            if (!user_id) {
-              frappe.msgprint(
-                __("Selected employee does not have a linked User ID."),
-              );
-              return;
-            }
-            frappe.db
-              .set_value(
-                frm.doctype,
-                frm.docname,
-                "stage_1_emp_user",
-                user_id,
-              )
-              .then(() => {
-                frm.reload_doc();
-                frappe.show_alert(
-                  {
-                    message: __("COM updated successfully"),
-                    indicator: "green",
-                  },
-                  8,
+          frappe.db
+            .get_value("Employee", values.new_com, "user_id")
+            .then((r) => {
+              let user_id = r.message ? r.message.user_id : null;
+              if (!user_id) {
+                frappe.msgprint(
+                  __("Selected employee does not have a linked User ID."),
                 );
-                d.hide();
-              });
-          });
+                return;
+              }
+              frappe.db
+                .set_value(
+                  frm.doctype,
+                  frm.docname,
+                  "stage_1_emp_user",
+                  user_id,
+                )
+                .then(() => {
+                  frm.reload_doc();
+                  frappe.show_alert(
+                    {
+                      message: __("COM updated successfully"),
+                      indicator: "green",
+                    },
+                    8,
+                  );
+                  d.hide();
+                });
+            });
         },
       });
       d.show();
@@ -1008,8 +1011,8 @@ frappe.ui.form.on("CMS", {
     let hofullName = "";
 
     // Robust extraction of ID (handles both numeric IDs and emails)
-    let comID = com ? com.split('@')[0] : null;
-    let hoID = ho ? ho.split('@')[0] : null;
+    let comID = com ? com.split("@")[0] : null;
+    let hoID = ho ? ho.split("@")[0] : null;
 
     console.log("com extracted number -", comID);
     console.log("ho extracted number -", hoID);
