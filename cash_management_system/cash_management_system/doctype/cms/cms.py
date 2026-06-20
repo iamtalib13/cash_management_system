@@ -81,9 +81,9 @@ class CMS(Document):
             
             if com_email:
                 self.com_email = com_email
-            else:
-                # If no employee email, use the user ID itself as a fallback
-                self.com_email = self.stage_1_emp_user
+            # else:
+            #     # If no employee email, use the user ID itself as a fallback
+            #     self.com_email = self.stage_1_emp_user
 
     def check_transaction_date(self):
         # Get the previous status if it exists
@@ -243,8 +243,7 @@ def send_status_email(doc, action, remark=None):
         recipients.add(doc.com_email.strip().lower())
         found_com_email = True
 
-    # B. Also look for regional COMs as additional recipients
-    if emp_details and emp_details.get("custom_region") and emp_details.get("custom_zone"):
+    if emp_details and emp_details.get("custom_region") and emp_details.get("custom_zone") and emp_details.get("sol_id"):
         # COM Designations to search for
         com_designations = [
             "CLUSTER OPERATION MANAGER",
@@ -256,12 +255,13 @@ def send_status_email(doc, action, remark=None):
             "SR. ZONAL MANAGER"
         ]
         
-        # Find an active Employee in the same region and zone with a COM designation
+        # Find an active Employee in the same region, zone, and sol_id with a COM designation
         com_approver_emails = frappe.db.get_all(
             "Employee",
             filters={
                 "custom_region": emp_details.get("custom_region"),
                 "custom_zone": emp_details.get("custom_zone"),
+                "sol_id": emp_details.get("sol_id"),
                 "status": "Active",
                 "designation": ["in", com_designations]
             },
