@@ -81,9 +81,9 @@ class CMS(Document):
             
             if com_email:
                 self.com_email = com_email
-            else:
-                # If no employee email, use the user ID itself as a fallback
-                self.com_email = self.stage_1_emp_user
+            # else:
+            #     # If no employee email, use the user ID itself as a fallback
+            #     self.com_email = self.stage_1_emp_user
 
     def check_transaction_date(self):
         # Get the previous status if it exists

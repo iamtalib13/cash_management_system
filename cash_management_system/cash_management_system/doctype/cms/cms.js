@@ -45,6 +45,8 @@ frappe.ui.form.on("CMS", {
   },
 
   refresh: function (frm) {
+    frm.set_intro("");
+    frm.set_intro(null);
     console.log("refresh fired"); // Add to refresh() for debugging
 
     //frm.trigger("transaction_category");
