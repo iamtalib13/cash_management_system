@@ -47,6 +47,12 @@ frappe.ui.form.on("CMS", {
   refresh: function (frm) {
     frm.set_intro("");
     frm.set_intro(null);
+    if (!frm._bank_registration_banner) {
+      $(
+        '<div class="cms-bank-registration-banner" style="padding: 8px 15px; background-color: #fff4e5; border: 1px solid #ffd9a0; color: #a05a00; border-radius: 4px; font-size: 13px; margin-bottom: 10px;">For Bank Registration mail on <b>operations@sahayogmultistate.com</b></div>'
+      ).prependTo($(frm.wrapper).find(".form-page").first());
+      frm._bank_registration_banner = true;
+    }
     console.log("refresh fired"); // Add to refresh() for debugging
 
     //frm.trigger("transaction_category");
