@@ -979,37 +979,34 @@ frappe.ui.form.on("CMS", {
       }
 
       frappe.confirm("Are you sure you want to submit?", function () {
-        // 🔹 ONLY save first
-        frm
-          .save()
-          .then(() => {
-            // 🔹 AFTER successful save → fetch COM approver
-            frappe.db
-              .get_value("CMS User", { com_approver: 1 }, "user")
-              .then((r) => {
-                if (!r.message) {
-                  frappe.msgprint("COM Approver not configured");
-                  return;
-                }
+        // 🔹 fetch COM approver first
+        frappe.db
+          .get_value("CMS User", { com_approver: 1 }, "user")
+          .then((r) => {
+            if (!r.message) {
+              frappe.msgprint("COM Approver not configured");
+              return;
+            }
 
-                // ✅ NOW update workflow fields
-                frm.set_value("stage_1_emp_user", r.message.user);
-                frm.set_value("stage_1_emp_status", "Pending");
-                frm.set_value("status", "COM Pending");
+            // ✅ set workflow fields BEFORE saving, so save never fails with "No changes in document"
+            frm.set_value("stage_1_emp_user", r.message.user);
+            frm.set_value("stage_1_emp_status", "Pending");
+            frm.set_value("status", "COM Pending");
 
-                frm.save().then(() => {
-                  frappe.show_alert(
-                    {
-                      message: "Form submitted successfully",
-                      indicator: "green",
-                    },
-                    8,
-                  );
-                });
+            frm
+              .save()
+              .then(() => {
+                frappe.show_alert(
+                  {
+                    message: "Form submitted successfully",
+                    indicator: "green",
+                  },
+                  8,
+                );
+              })
+              .catch(() => {
+                frappe.msgprint("Please fix validation errors.");
               });
-          })
-          .catch(() => {
-            frappe.msgprint("Please fix validation errors.");
           });
       });
     });
