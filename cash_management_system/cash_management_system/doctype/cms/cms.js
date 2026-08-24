@@ -303,6 +303,7 @@ frappe.ui.form.on("CMS", {
       "BRANCH OFFICER",
       "BRANCH MANAGER",
       "BRANCH OPERATION MANAGER",
+      "BRANCH CHANNEL MANAGER",
       "CUSTOMER SERVICE OFFICER",
       "CUSTOMER SERVICE MANAGER",
     ];
@@ -1322,6 +1323,7 @@ frappe.ui.form.on("CMS", {
         const allowedDesignations = [
           "BRANCH MANAGER",
           "BRANCH OPERATION MANAGER",
+          "BRANCH CHANNEL MANAGER",
           "BRANCH OFFICER",
           "ASST. BRANCH MANAGER",
           "CUSTOMER SERVICE OFFICER",
@@ -1960,6 +1962,7 @@ function apply_page_access_control(frm) {
     "BRANCH OFFICER",
     "BRANCH MANAGER",
     "BRANCH OPERATION MANAGER",
+    "BRANCH CHANNEL MANAGER",
     "CUSTOMER SERVICE OFFICER",
     "CUSTOMER SERVICE MANAGER",
     "CLUSTER OPERATION MANAGER",
