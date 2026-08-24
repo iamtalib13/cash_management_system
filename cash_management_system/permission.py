@@ -52,6 +52,7 @@ def cms_permission_query(user):
         "BRANCH OFFICER",
         "BRANCH MANAGER",
         "BRANCH OPERATION MANAGER",
+        "BRANCH CHANNEL MANAGER",
         "CUSTOMER SERVICE OFFICER",
         "CUSTOMER SERVICE MANAGER",
     }
