@@ -1042,16 +1042,16 @@ def get_com_by_sol_id(sol_id):
     employees = frappe.get_all(
         "Employee",
         filters={"sol_id": sol_id, "designation": ["like", "%CLUSTER OPERATION MANAGER%"]},
-        fields=["name", "user_id"]
+        fields=["user_id"]
     )
-    return [{"label": e.name, "value": e.user_id} for e in employees if e.user_id]
+    return [e.user_id for e in employees if e.user_id]
 
 @frappe.whitelist()
 def get_all_com_employees():
     employees = frappe.get_all(
         "Employee",
         filters={"designation": ["like", "%CLUSTER OPERATION MANAGER%"]},
-        fields=["name", "user_id"]
+        fields=["user_id"]
     )
-    return [{"label": e.name, "value": e.user_id} for e in employees if e.user_id]
+    return [e.user_id for e in employees if e.user_id]
     
