@@ -1127,6 +1127,12 @@ frappe.ui.form.on("CMS", {
           $search.val(empName + ' (' + userId + ')');
           $search.attr('data-selected-name', name);
           $dropdown.hide();
+          d.$wrapper.find('input[name="com_radio"]').prop('checked', false);
+        });
+
+        d.$wrapper.find('input[name="com_radio"]').on('change', function() {
+          $search.val('');
+          $search.removeAttr('data-selected-name');
         });
 
         $(document).on('click', function(e) {
