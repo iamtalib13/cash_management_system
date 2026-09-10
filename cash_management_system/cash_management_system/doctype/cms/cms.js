@@ -1134,11 +1134,11 @@ frappe.ui.form.on("CMS", {
           activeSection.find('.com-check-icon').remove();
           let checkedRadio = activeSection.find('input[name="com_radio"]:checked');
           if (checkedRadio.length) {
-            checkedRadio.closest('label').append('<span class="com-check-icon" style="margin-left:auto;display:flex;align-items:center;">' + checkSvg + '</span>');
+            checkedRadio.closest('label').prepend('<span class="com-check-icon" style="display:flex;align-items:center;margin-right:8px;">' + checkSvg + '</span>');
           }
           let selectedSearch = activeSection.find('#other_com_search');
           if (selectedSearch.length && selectedSearch.attr('data-selected-name')) {
-            selectedSearch.after('<span class="com-check-icon" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);display:flex;align-items:center;">' + checkSvg + '</span>');
+            selectedSearch.before('<span class="com-check-icon" style="position:absolute;left:10px;top:50%;transform:translateY(-50%);display:flex;align-items:center;">' + checkSvg + '</span>');
           }
           inactiveSection.css({'border-color': '#e2e8f0', 'background': '#f9fafb', 'opacity': '0.45'});
           inactiveSection.find('.com-check-icon').remove();
