@@ -979,18 +979,107 @@ frappe.ui.form.on("CMS", {
         return;
       }
 
-      frappe.confirm("Are you sure you want to submit?", function () {
-        // 🔹 fetch COM approver first
-        frappe.db
-          .get_value("CMS User", { com_approver: 1 }, "user")
-          .then((r) => {
-            if (!r.message) {
-              frappe.msgprint("COM Approver not configured");
+      let sol_id = frm.doc.sol_id;
+
+      Promise.all([
+        sol_id ? frappe.call({
+          method: "cash_management_system.cash_management_system.doctype.cms.cms.get_com_by_sol_id",
+          args: { sol_id: sol_id }
+        }) : Promise.resolve({ message: [] }),
+        frappe.call({
+          method: "cash_management_system.cash_management_system.doctype.cms.cms.get_all_com_employees"
+        })
+      ]).then(([comBySol, allCom]) => {
+        let comList = comBySol.message || [];
+        let otherList = (allCom.message || []).filter(e => !comList.find(c => c.name === e.name));
+
+        let empUserMap = {};
+        comList.forEach(e => { empUserMap[e.name] = e.user_id; });
+        otherList.forEach(e => { empUserMap[e.name] = e.user_id; });
+
+        let selectedComEmp = null;
+
+        let fullHtml = `
+        <div style="font-family:'Inter',sans-serif;border-radius:8px;">`;
+
+        if (comList.length) {
+          fullHtml += `<div id="com_section" style="margin-bottom:16px;padding:10px;border:2px solid #e2e8f0;border-radius:8px;transition:border-color 0.2s,background 0.2s;position:relative;">
+            <div style="position:absolute;top:-10px;left:20px;background:#fff;padding:0 8px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:#6c757d;">COM Employees (by sol_id)</div>
+            <div style="border:1px solid #e2e8f0;border-radius:8px;overflow:hidden;">`;
+          comList.forEach((e, i) => {
+            let bg = i % 2 === 0 ? '#fff' : '#f8fafc';
+            let shortId = e.user_id ? e.user_id.split('@')[0] : e.user_id;
+            fullHtml += `<label style="display:flex;align-items:center;padding:10px 14px;background:${bg};cursor:pointer;border-bottom:1px solid #e2e8f0;transition:background 0.15s;" onmouseover="this.style.background='#eef2ff'" onmouseout="this.style.background='${bg}'">
+              <input type="radio" name="com_radio" value="${e.name}" data-userid="${e.user_id}" style="width:16px;height:16px;margin-right:12px;accent-color:#5e64ff;">
+              <div>
+                <div style="font-size:13px;font-weight:600;color:#1e293b;">${e.employee_name} - ${shortId}</div>
+                <div style="font-size:11px;color:#64748b;margin-top:1px;">${e.district || ''}</div>
+              </div>
+            </label>`;
+          });
+          fullHtml += '</div></div>';
+        }
+
+        if (otherList.length) {
+          fullHtml += `<div id="other_section" style="margin-bottom:16px;position:relative;padding:10px;border:2px solid #e2e8f0;border-radius:8px;transition:border-color 0.2s,background 0.2s;">
+            <div style="position:absolute;top:-10px;left:20px;background:#fff;padding:0 8px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:#6c757d;">Other COM Employees</div>
+            <div id="other_com_wrapper" style="position:relative;">
+              <div style="position:relative;">
+                <input type="text" id="other_com_search" placeholder="Search by name or ID..." autocomplete="off" style="width:100%;padding:10px 12px;border:1px solid #e2e8f0;border-radius:8px;font-size:13px;color:#1e293b;box-sizing:border-box;background:#fff;">
+                <span class="other-count" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);font-size:12px;color:#94a3b8;pointer-events:none;">(${otherList.length})</span>
+              </div>
+              <div id="other_com_dropdown" style="display:none;position:absolute;top:100%;left:0;right:0;max-height:200px;overflow-y:auto;border:1px solid #e2e8f0;border-radius:0 0 8px 8px;background:#fff;z-index:1000;box-shadow:0 4px 12px rgba(0,0,0,0.1);">`;
+          otherList.forEach((e) => {
+            let shortId = e.user_id ? e.user_id.split('@')[0] : e.user_id;
+            fullHtml += `<div class="other-dropdown-item" data-name="${e.name}" data-userid="${e.user_id}" data-search="${(e.employee_name + ' ' + e.user_id).toLowerCase()}" style="display:flex;align-items:center;padding:10px 14px;cursor:pointer;border-bottom:1px solid #f1f5f9;transition:background 0.15s;" onmouseover="this.style.background='#eef2ff'" onmouseout="this.style.background='#fff'">
+              <div>
+                <div style="font-size:13px;font-weight:600;color:#1e293b;">${e.employee_name} - ${shortId}</div>
+                <div style="font-size:11px;color:#64748b;margin-top:1px;">${e.district || ''}</div>
+              </div>
+            </div>`;
+          });
+          fullHtml += '</div></div></div>';
+        }
+
+        fullHtml += '</div>';
+
+        let fields = [];
+
+        fields.push({
+          label: __(""),
+          fieldname: "com_selection_html",
+          fieldtype: "HTML",
+          options: fullHtml,
+        });
+
+        let d = new frappe.ui.Dialog({
+          title: __("Select COM Approver"),
+          fields: fields,
+          primary_action_label: __("Submit"),
+          primary_action: function () {
+            let radioEl = d.$wrapper.find('input[name="com_radio"]:checked');
+            let empName = null;
+
+            if (radioEl.length) {
+              empName = radioEl.val();
+            } else {
+              empName = d.$wrapper.find('#other_com_search').attr('data-selected-name');
+            }
+
+            if (!empName) {
+              frappe.msgprint("Please select a COM employee.");
               return;
             }
 
-            // ✅ set workflow fields BEFORE saving, so save never fails with "No changes in document"
-            frm.set_value("stage_1_emp_user", r.message.user);
+            let userId = empUserMap[empName];
+            if (!userId) {
+              frappe.msgprint("Selected employee has no user_id.");
+              return;
+            }
+
+            d.hide();
+
+            frm.set_value("stage_1_emp_user", userId);
             frm.set_value("stage_1_emp_status", "Pending");
             frm.set_value("status", "COM Pending");
 
@@ -1008,7 +1097,91 @@ frappe.ui.form.on("CMS", {
               .catch(() => {
                 frappe.msgprint("Please fix validation errors.");
               });
+          },
+        });
+
+        d.show();
+
+        let $search = d.$wrapper.find('#other_com_search');
+        let $dropdown = d.$wrapper.find('#other_com_dropdown');
+
+        $search.on('focus', function() {
+          $dropdown.show();
+          $otherSection.css({'opacity': '1'});
+        });
+
+        $search.on('blur', function() {
+          if (!$dropdown.is(':visible') || !$dropdown.find('.other-dropdown-item:hover').length) {
+            $dropdown.hide();
+            $otherSection.css({'opacity': '0.45'});
+          }
+        });
+
+        $search.on('input', function() {
+          let query = $(this).val().toLowerCase();
+          $dropdown.find('.other-dropdown-item').each(function() {
+            let search = $(this).data('search') || '';
+            $(this).toggle(search.indexOf(query) > -1);
           });
+          $dropdown.show();
+          $otherSection.css({'opacity': '1'});
+        });
+
+        let $comSection = d.$wrapper.find('#com_section');
+        let $otherSection = d.$wrapper.find('#other_section');
+
+        let checkSvg = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>';
+
+        function highlightSection(activeSection, inactiveSection) {
+          activeSection.css({'border-color': '#22c55e', 'background': '#f0fdf4', 'opacity': '1'});
+          activeSection.find('.com-check-icon').remove();
+          let checkedRadio = activeSection.find('input[name="com_radio"]:checked');
+          if (checkedRadio.length) {
+            checkedRadio.closest('label').prepend('<span class="com-check-icon" style="display:flex;align-items:center;margin-right:8px;">' + checkSvg + '</span>');
+          }
+          let selectedSearch = activeSection.find('#other_com_search');
+          if (selectedSearch.length && selectedSearch.attr('data-selected-name')) {
+            selectedSearch.before('<span class="com-check-icon" style="position:absolute;left:10px;top:50%;transform:translateY(-50%);display:flex;align-items:center;">' + checkSvg + '</span>');
+          }
+          inactiveSection.css({'border-color': '#e2e8f0', 'background': '#f9fafb', 'opacity': '0.45'});
+          inactiveSection.find('.com-check-icon').remove();
+        }
+
+        function resetSections() {
+          $comSection.css({'border-color': '#e2e8f0', 'background': 'transparent', 'opacity': '1'});
+          $otherSection.css({'border-color': '#e2e8f0', 'background': 'transparent', 'opacity': '1'});
+          $comSection.find('.com-check-icon').remove();
+          $otherSection.find('.com-check-icon').remove();
+          d.$wrapper.find('input[name="com_radio"]').css({'opacity': '1', 'width': '', 'margin': ''});
+        }
+
+        d.$wrapper.find('.other-dropdown-item').on('click', function() {
+          let name = $(this).data('name');
+          let label = $(this).find('div').text();
+          let userId = $(this).data('userid');
+          let shortId = userId ? userId.split('@')[0] : userId;
+          let empName = label.split(' - ')[0];
+          $search.val(empName + ' - ' + shortId);
+          $search.attr('data-selected-name', name);
+          $dropdown.hide();
+          d.$wrapper.find('.other-count').hide();
+          d.$wrapper.find('input[name="com_radio"]').prop('checked', false);
+          highlightSection($otherSection, $comSection);
+        });
+
+        d.$wrapper.find('input[name="com_radio"]').on('change', function() {
+          $search.val('');
+          $search.removeAttr('data-selected-name');
+          d.$wrapper.find('input[name="com_radio"]').css({'opacity': '1'});
+          $(this).css({'opacity': '0', 'width': '0', 'margin': '0'});
+          highlightSection($comSection, $otherSection);
+        });
+
+        $(document).on('click', function(e) {
+          if (!d.$wrapper.find('#other_com_wrapper').is(e.target) && d.$wrapper.find('#other_com_wrapper').has(e.target).length === 0) {
+            $dropdown.hide();
+          }
+        });
       });
     });
 
@@ -1402,6 +1575,21 @@ frappe.ui.form.on("CMS", {
           frm.doc.sol_id = employeeData.sol_id;
 
           console.log("Employee Data:", employeeData);
+
+          if (employeeData.custom_district) {
+            frappe.call({
+              method: "cash_management_system.cash_management_system.doctype.cms.cms.get_branch_by_district",
+              args: { district: employeeData.custom_district },
+              callback: function(r) {
+                console.log("Sahayog Branch by District:", r.message);
+                if (r.message && r.message.length) {
+                  r.message.forEach(function(name) {
+                    console.log("Branch:", name);
+                  });
+                }
+              }
+            });
+          }
 
           // Safeguard against potential HTML injection
           const escapeHtml = (unsafe) => {

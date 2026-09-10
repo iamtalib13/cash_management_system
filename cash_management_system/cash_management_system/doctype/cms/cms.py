@@ -73,7 +73,8 @@ class CMS(Document):
         self.set_com_email()
                    
     def set_com_email(self):
-        self.stage_1_emp_user = self.get_com(self.branch)  
+        if not self.stage_1_emp_user:
+            self.stage_1_emp_user = self.get_com(self.branch)  
         
         if self.stage_1_emp_user:
             # Fetch the employee's email using the User ID (stage_1_emp_user)
@@ -1027,4 +1028,30 @@ def before_print(doc, print_format=None):
     additional_data = frappe.db.get_value('Another Doctype', {'doc_name': doc.name}, 'desired_field')
     # Attach it to the document context
     doc.additional_data = additional_data
+
+@frappe.whitelist()
+def get_branch_by_district(district):
+    if not district:
+        return None
+    return frappe.get_all("Sahayog Branch", filters={"district": district}, pluck="name")
+
+@frappe.whitelist()
+def get_com_by_sol_id(sol_id):
+    if not sol_id:
+        return None
+    employees = frappe.get_all(
+        "Employee",
+        filters={"sol_id": sol_id, "designation": ["like", "%CLUSTER OPERATION MANAGER%"]},
+        fields=["name", "employee_name", "user_id", "custom_district"]
+    )
+    return [{"name": e.name, "employee_name": e.employee_name, "user_id": e.user_id, "district": e.custom_district} for e in employees if e.user_id]
+
+@frappe.whitelist()
+def get_all_com_employees():
+    employees = frappe.get_all(
+        "Employee",
+        filters={"designation": ["like", "%CLUSTER OPERATION MANAGER%"]},
+        fields=["name", "employee_name", "user_id", "custom_district"]
+    )
+    return [{"name": e.name, "employee_name": e.employee_name, "user_id": e.user_id, "district": e.custom_district} for e in employees if e.user_id]
     
