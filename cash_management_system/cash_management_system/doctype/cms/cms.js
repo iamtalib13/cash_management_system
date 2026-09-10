@@ -1000,11 +1000,11 @@ frappe.ui.form.on("CMS", {
         let selectedComEmp = null;
 
         let fullHtml = `
-        <div style="font-family:'Inter',sans-serif;padding:4px 0;">`;
+        <div style="font-family:'Inter',sans-serif;padding:12px;border:2px solid #e2e8f0;border-radius:8px;">`;
 
         if (comList.length) {
-          fullHtml += `<div id="com_section" style="margin-bottom:16px;padding:10px;border:2px solid #e2e8f0;border-radius:8px;transition:border-color 0.2s,background 0.2s;">
-            <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:#6c757d;margin-bottom:8px;">COM Employees (by sol_id)</div>
+          fullHtml += `<div id="com_section" style="margin-bottom:16px;padding:10px;border:2px solid #e2e8f0;border-radius:8px;transition:border-color 0.2s,background 0.2s;position:relative;">
+            <div style="position:absolute;top:-10px;left:20px;background:#fff;padding:0 8px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:#6c757d;">COM Employees (by sol_id)</div>
             <div style="border:1px solid #e2e8f0;border-radius:8px;overflow:hidden;">`;
           comList.forEach((e, i) => {
             let bg = i % 2 === 0 ? '#fff' : '#f8fafc';
@@ -1022,7 +1022,7 @@ frappe.ui.form.on("CMS", {
 
         if (otherList.length) {
           fullHtml += `<div id="other_section" style="margin-bottom:16px;position:relative;padding:10px;border:2px solid #e2e8f0;border-radius:8px;transition:border-color 0.2s,background 0.2s;">
-            <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:#6c757d;margin-bottom:8px;">Other COM Employees</div>
+            <div style="position:absolute;top:-10px;left:20px;background:#fff;padding:0 8px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:#6c757d;">Other COM Employees</div>
             <div id="other_com_wrapper" style="position:relative;">
               <input type="text" id="other_com_search" placeholder="Search by name or ID..." autocomplete="off" style="width:100%;padding:10px 12px;border:1px solid #e2e8f0;border-radius:8px;font-size:13px;color:#1e293b;box-sizing:border-box;background:#fff;">
               <div id="other_com_dropdown" style="display:none;position:absolute;top:100%;left:0;right:0;max-height:200px;overflow-y:auto;border:1px solid #e2e8f0;border-radius:0 0 8px 8px;background:#fff;z-index:1000;box-shadow:0 4px 12px rgba(0,0,0,0.1);">`;
