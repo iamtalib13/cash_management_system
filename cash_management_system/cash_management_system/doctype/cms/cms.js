@@ -1026,7 +1026,7 @@ frappe.ui.form.on("CMS", {
             <div id="other_com_wrapper" style="position:relative;">
               <div style="position:relative;">
                 <input type="text" id="other_com_search" placeholder="Search by name or ID..." autocomplete="off" style="width:100%;padding:10px 12px;border:1px solid #e2e8f0;border-radius:8px;font-size:13px;color:#1e293b;box-sizing:border-box;background:#fff;">
-                <span style="position:absolute;right:12px;top:50%;transform:translateY(-50%);font-size:12px;color:#94a3b8;pointer-events:none;">(${otherList.length})</span>
+                <span class="other-count" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);font-size:12px;color:#94a3b8;pointer-events:none;">(${otherList.length})</span>
               </div>
               <div id="other_com_dropdown" style="display:none;position:absolute;top:100%;left:0;right:0;max-height:200px;overflow-y:auto;border:1px solid #e2e8f0;border-radius:0 0 8px 8px;background:#fff;z-index:1000;box-shadow:0 4px 12px rgba(0,0,0,0.1);">`;
           otherList.forEach((e) => {
@@ -1164,6 +1164,7 @@ frappe.ui.form.on("CMS", {
           $search.val(empName + ' - ' + shortId);
           $search.attr('data-selected-name', name);
           $dropdown.hide();
+          d.$wrapper.find('.other-count').hide();
           d.$wrapper.find('input[name="com_radio"]').prop('checked', false);
           highlightSection($otherSection, $comSection);
         });
