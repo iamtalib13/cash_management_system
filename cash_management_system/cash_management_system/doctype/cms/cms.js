@@ -997,18 +997,24 @@ frappe.ui.form.on("CMS", {
         comList.forEach(e => { empUserMap[e.name] = e.user_id; });
         otherList.forEach(e => { empUserMap[e.name] = e.user_id; });
 
+        let selectedComEmp = null;
+
         let fields = [];
 
         if (comList.length) {
-          let com_ids = comList.map(e => e.name);
+          let radioHtml = '<div style="margin-top:8px;">';
+          comList.forEach((e, i) => {
+            radioHtml += `<label style="display:block;padding:4px 0;cursor:pointer;">
+              <input type="radio" name="com_radio" value="${e.name}" data-userid="${e.user_id}" style="margin-right:6px;">
+              ${e.employee_name} (${e.user_id})
+            </label>`;
+          });
+          radioHtml += '</div>';
           fields.push({
             label: __("COM Employees (by sol_id)"),
-            fieldname: "com_by_sol",
-            fieldtype: "Link",
-            options: "Employee",
-            get_query: function() {
-              return { filters: { name: ["in", com_ids] } };
-            },
+            fieldname: "com_by_sol_html",
+            fieldtype: "HTML",
+            options: radioHtml,
           });
         }
 
@@ -1036,7 +1042,15 @@ frappe.ui.form.on("CMS", {
           fields: fields,
           primary_action_label: __("Submit"),
           primary_action: function () {
-            let empName = d.get_value("com_by_sol") || d.get_value("other_com");
+            let radioEl = d.$wrapper.find('input[name="com_radio"]:checked');
+            let empName = null;
+
+            if (radioEl.length) {
+              empName = radioEl.val();
+            } else {
+              empName = d.get_value("other_com");
+            }
+
             if (!empName) {
               frappe.msgprint("Please select a COM employee.");
               return;
