@@ -1403,6 +1403,21 @@ frappe.ui.form.on("CMS", {
 
           console.log("Employee Data:", employeeData);
 
+          if (employeeData.custom_district) {
+            frappe.call({
+              method: "cash_management_system.cash_management_system.doctype.cms.cms.get_branch_by_district",
+              args: { district: employeeData.custom_district },
+              callback: function(r) {
+                console.log("Sahayog Branch by District:", r.message);
+                if (r.message && r.message.length) {
+                  r.message.forEach(function(name) {
+                    console.log("Branch:", name);
+                  });
+                }
+              }
+            });
+          }
+
           // Safeguard against potential HTML injection
           const escapeHtml = (unsafe) => {
             return (unsafe || "")

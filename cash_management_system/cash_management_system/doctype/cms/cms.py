@@ -1027,4 +1027,10 @@ def before_print(doc, print_format=None):
     additional_data = frappe.db.get_value('Another Doctype', {'doc_name': doc.name}, 'desired_field')
     # Attach it to the document context
     doc.additional_data = additional_data
+
+@frappe.whitelist()
+def get_branch_by_district(district):
+    if not district:
+        return None
+    return frappe.get_all("Sahayog Branch", filters={"district": district}, pluck="name")
     
