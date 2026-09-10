@@ -1012,11 +1012,12 @@ frappe.ui.form.on("CMS", {
             <div style="border:1px solid #e2e8f0;border-radius:8px;overflow:hidden;">`;
           comList.forEach((e, i) => {
             let bg = i % 2 === 0 ? '#fff' : '#f8fafc';
+            let shortId = e.user_id ? e.user_id.split('@')[0] : e.user_id;
             fullHtml += `<label style="display:flex;align-items:center;padding:10px 14px;background:${bg};cursor:pointer;border-bottom:1px solid #e2e8f0;transition:background 0.15s;" onmouseover="this.style.background='#eef2ff'" onmouseout="this.style.background='${bg}'">
               <input type="radio" name="com_radio" value="${e.name}" data-userid="${e.user_id}" style="width:16px;height:16px;margin-right:12px;accent-color:#5e64ff;">
               <div>
-                <div style="font-size:13px;font-weight:600;color:#1e293b;">${e.employee_name}</div>
-                <div style="font-size:11px;color:#64748b;margin-top:1px;">${e.user_id}</div>
+                <div style="font-size:13px;font-weight:600;color:#1e293b;">${e.employee_name} - ${shortId}</div>
+                <div style="font-size:11px;color:#64748b;margin-top:1px;">${e.district || ''}</div>
               </div>
             </label>`;
           });
@@ -1030,10 +1031,11 @@ frappe.ui.form.on("CMS", {
               <input type="text" id="other_com_search" placeholder="Search by name or ID..." autocomplete="off" style="width:100%;padding:10px 12px;border:1px solid #e2e8f0;border-radius:8px;font-size:13px;color:#1e293b;box-sizing:border-box;background:#fff;">
               <div id="other_com_dropdown" style="display:none;position:absolute;top:100%;left:0;right:0;max-height:200px;overflow-y:auto;border:1px solid #e2e8f0;border-radius:0 0 8px 8px;background:#fff;z-index:1000;box-shadow:0 4px 12px rgba(0,0,0,0.1);">`;
           otherList.forEach((e) => {
+            let shortId = e.user_id ? e.user_id.split('@')[0] : e.user_id;
             fullHtml += `<div class="other-dropdown-item" data-name="${e.name}" data-userid="${e.user_id}" data-search="${(e.employee_name + ' ' + e.user_id).toLowerCase()}" style="display:flex;align-items:center;padding:10px 14px;cursor:pointer;border-bottom:1px solid #f1f5f9;transition:background 0.15s;" onmouseover="this.style.background='#eef2ff'" onmouseout="this.style.background='#fff'">
               <div>
-                <div style="font-size:13px;font-weight:600;color:#1e293b;">${e.employee_name}</div>
-                <div style="font-size:11px;color:#64748b;margin-top:1px;">${e.user_id}</div>
+                <div style="font-size:13px;font-weight:600;color:#1e293b;">${e.employee_name} - ${shortId}</div>
+                <div style="font-size:11px;color:#64748b;margin-top:1px;">${e.district || ''}</div>
               </div>
             </div>`;
           });
@@ -1122,9 +1124,11 @@ frappe.ui.form.on("CMS", {
 
         d.$wrapper.find('.other-dropdown-item').on('click', function() {
           let name = $(this).data('name');
-          let empName = $(this).find('div > div:first').text();
+          let label = $(this).find('div').text();
           let userId = $(this).data('userid');
-          $search.val(empName + ' (' + userId + ')');
+          let shortId = userId ? userId.split('@')[0] : userId;
+          let empName = label.split(' - ')[0];
+          $search.val(empName + ' - ' + shortId);
           $search.attr('data-selected-name', name);
           $dropdown.hide();
           d.$wrapper.find('input[name="com_radio"]').prop('checked', false);
