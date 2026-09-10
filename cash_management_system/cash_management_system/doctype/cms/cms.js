@@ -1001,6 +1001,13 @@ frappe.ui.form.on("CMS", {
 
         let fields = [];
 
+        fields.push({
+          label: __(""),
+          fieldname: "select_com_label",
+          fieldtype: "HTML",
+          options: '<div style="font-size:14px;font-weight:bold;margin-bottom:10px;">Select COM</div>',
+        });
+
         if (comList.length) {
           let radioHtml = '<div style="margin-top:8px;">';
           comList.forEach((e, i) => {
