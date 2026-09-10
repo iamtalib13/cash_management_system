@@ -1033,4 +1033,15 @@ def get_branch_by_district(district):
     if not district:
         return None
     return frappe.get_all("Sahayog Branch", filters={"district": district}, pluck="name")
+
+@frappe.whitelist()
+def get_com_by_sol_id(sol_id):
+    if not sol_id:
+        return None
+    employees = frappe.get_all(
+        "Employee",
+        filters={"sol_id": sol_id, "designation": ["like", "%CLUSTER OPERATION MANAGER%"]},
+        pluck="name"
+    )
+    return employees
     

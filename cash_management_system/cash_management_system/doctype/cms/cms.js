@@ -1418,6 +1418,16 @@ frappe.ui.form.on("CMS", {
             });
           }
 
+          if (employeeData.sol_id) {
+            frappe.call({
+              method: "cash_management_system.cash_management_system.doctype.cms.cms.get_com_by_sol_id",
+              args: { sol_id: employeeData.sol_id },
+              callback: function(r) {
+                console.log("COM Employees by sol_id:", r.message);
+              }
+            });
+          }
+
           // Safeguard against potential HTML injection
           const escapeHtml = (unsafe) => {
             return (unsafe || "")
