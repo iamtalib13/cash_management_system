@@ -1000,11 +1000,7 @@ frappe.ui.form.on("CMS", {
         let selectedComEmp = null;
 
         let fullHtml = `
-        <div style="font-family:'Inter',sans-serif;padding:4px 0;">
-          <div style="background:linear-gradient(135deg,#5e64ff 0%,#7c3aed 100%);color:#fff;padding:14px 18px;border-radius:8px;margin-bottom:16px;">
-            <div style="font-size:17px;font-weight:700;">Select COM</div>
-            <div style="font-size:12px;opacity:0.85;margin-top:2px;">Choose the appropriate COM approver for this request</div>
-          </div>`;
+        <div style="font-family:'Inter',sans-serif;padding:4px 0;">`;
 
         if (comList.length) {
           fullHtml += `<div id="com_section" style="margin-bottom:16px;padding:10px;border:2px solid #e2e8f0;border-radius:8px;transition:border-color 0.2s,background 0.2s;">
@@ -1042,10 +1038,7 @@ frappe.ui.form.on("CMS", {
           fullHtml += '</div></div></div>';
         }
 
-        fullHtml += `<div>
-          <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:#6c757d;margin-bottom:8px;">Remarks</div>
-          <textarea id="remarks_input" rows="3" placeholder="Enter remarks here..." style="width:100%;padding:10px 12px;border:1px solid #e2e8f0;border-radius:8px;font-size:13px;color:#1e293b;resize:vertical;box-sizing:border-box;"></textarea>
-        </div></div>`;
+        fullHtml += '</div>';
 
         let fields = [];
 
