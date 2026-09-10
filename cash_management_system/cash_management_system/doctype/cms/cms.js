@@ -1149,6 +1149,7 @@ frappe.ui.form.on("CMS", {
           $otherSection.css({'border-color': '#e2e8f0', 'background': 'transparent', 'opacity': '1'});
           $comSection.find('.com-check-icon').remove();
           $otherSection.find('.com-check-icon').remove();
+          d.$wrapper.find('input[name="com_radio"]').css({'opacity': '1', 'width': '', 'margin': ''});
         }
 
         d.$wrapper.find('.other-dropdown-item').on('click', function() {
@@ -1167,6 +1168,8 @@ frappe.ui.form.on("CMS", {
         d.$wrapper.find('input[name="com_radio"]').on('change', function() {
           $search.val('');
           $search.removeAttr('data-selected-name');
+          d.$wrapper.find('input[name="com_radio"]').css({'opacity': '1'});
+          $(this).css({'opacity': '0', 'width': '0', 'margin': '0'});
           highlightSection($comSection, $otherSection);
         });
 
