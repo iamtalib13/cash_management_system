@@ -1428,6 +1428,13 @@ frappe.ui.form.on("CMS", {
             });
           }
 
+          frappe.call({
+            method: "cash_management_system.cash_management_system.doctype.cms.cms.get_all_com_employees",
+            callback: function(r) {
+              console.log("Other COM Employees:", r.message);
+            }
+          });
+
           // Safeguard against potential HTML injection
           const escapeHtml = (unsafe) => {
             return (unsafe || "")

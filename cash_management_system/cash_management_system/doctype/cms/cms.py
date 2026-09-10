@@ -1044,4 +1044,13 @@ def get_com_by_sol_id(sol_id):
         pluck="name"
     )
     return employees
+
+@frappe.whitelist()
+def get_all_com_employees():
+    employees = frappe.get_all(
+        "Employee",
+        filters={"designation": ["like", "%CLUSTER OPERATION MANAGER%"]},
+        pluck="name"
+    )
+    return employees
     
