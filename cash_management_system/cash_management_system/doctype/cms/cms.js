@@ -996,20 +996,22 @@ frappe.ui.form.on("CMS", {
         let fields = [];
 
         if (comList.length) {
+          let options = comList.map(e => e.user_id + ":" + e.name + " (" + e.user_id + ")").join("\n");
           fields.push({
             label: __("COM Employees (by sol_id)"),
             fieldname: "com_by_sol",
             fieldtype: "Select",
-            options: comList.join("\n"),
+            options: options,
           });
         }
 
         if (otherList.length) {
+          let options = otherList.map(e => e.user_id + ":" + e.name + " (" + e.user_id + ")").join("\n");
           fields.push({
             label: __("Other COM Employees"),
             fieldname: "other_com",
             fieldtype: "Select",
-            options: otherList.join("\n"),
+            options: options,
           });
         }
 
