@@ -1007,7 +1007,7 @@ frappe.ui.form.on("CMS", {
           </div>`;
 
         if (comList.length) {
-          fullHtml += `<div style="margin-bottom:16px;">
+          fullHtml += `<div id="com_section" style="margin-bottom:16px;padding:10px;border:2px solid #e2e8f0;border-radius:8px;transition:border-color 0.2s,background 0.2s;">
             <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:#6c757d;margin-bottom:8px;">COM Employees (by sol_id)</div>
             <div style="border:1px solid #e2e8f0;border-radius:8px;overflow:hidden;">`;
           comList.forEach((e, i) => {
@@ -1025,7 +1025,7 @@ frappe.ui.form.on("CMS", {
         }
 
         if (otherList.length) {
-          fullHtml += `<div style="margin-bottom:16px;position:relative;">
+          fullHtml += `<div id="other_section" style="margin-bottom:16px;position:relative;padding:10px;border:2px solid #e2e8f0;border-radius:8px;transition:border-color 0.2s,background 0.2s;">
             <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:#6c757d;margin-bottom:8px;">Other COM Employees</div>
             <div id="other_com_wrapper" style="position:relative;">
               <input type="text" id="other_com_search" placeholder="Search by name or ID..." autocomplete="off" style="width:100%;padding:10px 12px;border:1px solid #e2e8f0;border-radius:8px;font-size:13px;color:#1e293b;box-sizing:border-box;background:#fff;">
@@ -1122,6 +1122,22 @@ frappe.ui.form.on("CMS", {
           $dropdown.show();
         });
 
+        let $comSection = d.$wrapper.find('#com_section');
+        let $otherSection = d.$wrapper.find('#other_section');
+
+        function highlightSection(activeSection, inactiveSection) {
+          activeSection.css({'border-color': '#22c55e', 'background': '#f0fdf4', 'opacity': '1'});
+          inactiveSection.css({'border-color': '#e2e8f0', 'background': '#f9fafb', 'opacity': '0.45'});
+          inactiveSection.find('input, label').css({'pointer-events': 'none'});
+        }
+
+        function resetSections() {
+          $comSection.css({'border-color': '#e2e8f0', 'background': 'transparent', 'opacity': '1'});
+          $comSection.find('input, label').css({'pointer-events': 'auto'});
+          $otherSection.css({'border-color': '#e2e8f0', 'background': 'transparent', 'opacity': '1'});
+          $otherSection.find('input, label').css({'pointer-events': 'auto'});
+        }
+
         d.$wrapper.find('.other-dropdown-item').on('click', function() {
           let name = $(this).data('name');
           let label = $(this).find('div').text();
@@ -1132,11 +1148,13 @@ frappe.ui.form.on("CMS", {
           $search.attr('data-selected-name', name);
           $dropdown.hide();
           d.$wrapper.find('input[name="com_radio"]').prop('checked', false);
+          highlightSection($otherSection, $comSection);
         });
 
         d.$wrapper.find('input[name="com_radio"]').on('change', function() {
           $search.val('');
           $search.removeAttr('data-selected-name');
+          highlightSection($comSection, $otherSection);
         });
 
         $(document).on('click', function(e) {
