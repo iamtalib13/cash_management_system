@@ -999,49 +999,53 @@ frappe.ui.form.on("CMS", {
 
         let selectedComEmp = null;
 
+        let fullHtml = `
+        <div style="font-family:'Inter',sans-serif;padding:4px 0;">
+          <div style="background:linear-gradient(135deg,#5e64ff 0%,#7c3aed 100%);color:#fff;padding:14px 18px;border-radius:8px;margin-bottom:16px;">
+            <div style="font-size:17px;font-weight:700;">Select COM</div>
+            <div style="font-size:12px;opacity:0.85;margin-top:2px;">Choose the appropriate COM approver for this request</div>
+          </div>`;
+
+        if (comList.length) {
+          fullHtml += `<div style="margin-bottom:16px;">
+            <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:#6c757d;margin-bottom:8px;">COM Employees (by sol_id)</div>
+            <div style="border:1px solid #e2e8f0;border-radius:8px;overflow:hidden;">`;
+          comList.forEach((e, i) => {
+            let bg = i % 2 === 0 ? '#fff' : '#f8fafc';
+            fullHtml += `<label style="display:flex;align-items:center;padding:10px 14px;background:${bg};cursor:pointer;border-bottom:1px solid #e2e8f0;transition:background 0.15s;" onmouseover="this.style.background='#eef2ff'" onmouseout="this.style.background='${bg}'">
+              <input type="radio" name="com_radio" value="${e.name}" data-userid="${e.user_id}" style="width:16px;height:16px;margin-right:12px;accent-color:#5e64ff;">
+              <div>
+                <div style="font-size:13px;font-weight:600;color:#1e293b;">${e.employee_name}</div>
+                <div style="font-size:11px;color:#64748b;margin-top:1px;">${e.user_id}</div>
+              </div>
+            </label>`;
+          });
+          fullHtml += '</div></div>';
+        }
+
+        if (otherList.length) {
+          fullHtml += `<div style="margin-bottom:16px;">
+            <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:#6c757d;margin-bottom:8px;">Other COM Employees</div>
+            <select id="other_com_select" style="width:100%;padding:10px 12px;border:1px solid #e2e8f0;border-radius:8px;font-size:13px;color:#1e293b;background:#fff;appearance:auto;">
+              <option value="">Select Employee</option>`;
+          otherList.forEach((e) => {
+            fullHtml += `<option value="${e.name}">${e.employee_name} (${e.user_id})</option>`;
+          });
+          fullHtml += '</select></div>';
+        }
+
+        fullHtml += `<div>
+          <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:#6c757d;margin-bottom:8px;">Remarks</div>
+          <textarea id="remarks_input" rows="3" placeholder="Enter remarks here..." style="width:100%;padding:10px 12px;border:1px solid #e2e8f0;border-radius:8px;font-size:13px;color:#1e293b;resize:vertical;box-sizing:border-box;"></textarea>
+        </div></div>`;
+
         let fields = [];
 
         fields.push({
           label: __(""),
-          fieldname: "select_com_label",
+          fieldname: "com_selection_html",
           fieldtype: "HTML",
-          options: '<div style="font-size:14px;font-weight:bold;margin-bottom:10px;">Select COM</div>',
-        });
-
-        if (comList.length) {
-          let radioHtml = '<div style="margin-top:8px;">';
-          comList.forEach((e, i) => {
-            radioHtml += `<label style="display:block;padding:4px 0;cursor:pointer;">
-              <input type="radio" name="com_radio" value="${e.name}" data-userid="${e.user_id}" style="margin-right:6px;">
-              ${e.employee_name} (${e.user_id})
-            </label>`;
-          });
-          radioHtml += '</div>';
-          fields.push({
-            label: __("COM Employees (by sol_id)"),
-            fieldname: "com_by_sol_html",
-            fieldtype: "HTML",
-            options: radioHtml,
-          });
-        }
-
-        if (otherList.length) {
-          let other_ids = otherList.map(e => e.name);
-          fields.push({
-            label: __("Other COM Employees"),
-            fieldname: "other_com",
-            fieldtype: "Link",
-            options: "Employee",
-            get_query: function() {
-              return { filters: { name: ["in", other_ids] } };
-            },
-          });
-        }
-
-        fields.push({
-          label: __("Remarks"),
-          fieldname: "remarks",
-          fieldtype: "Small Text",
+          options: fullHtml,
         });
 
         let d = new frappe.ui.Dialog({
@@ -1055,7 +1059,7 @@ frappe.ui.form.on("CMS", {
             if (radioEl.length) {
               empName = radioEl.val();
             } else {
-              empName = d.get_value("other_com");
+              empName = d.$wrapper.find('#other_com_select').val();
             }
 
             if (!empName) {
