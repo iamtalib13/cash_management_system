@@ -1127,14 +1127,21 @@ frappe.ui.form.on("CMS", {
         let $comSection = d.$wrapper.find('#com_section');
         let $otherSection = d.$wrapper.find('#other_section');
 
+        let checkSvg = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>';
+
         function highlightSection(activeSection, inactiveSection) {
           activeSection.css({'border-color': '#22c55e', 'background': '#f0fdf4', 'opacity': '1'});
+          activeSection.find('.com-check-icon').remove();
+          activeSection.find('[style*="top:-10px"]').first().after('<span class="com-check-icon" style="position:absolute;top:-8px;right:14px;background:#fff;padding:0;border-radius:50%;display:flex;align-items:center;justify-content:center;">' + checkSvg + '</span>');
           inactiveSection.css({'border-color': '#e2e8f0', 'background': '#f9fafb', 'opacity': '0.45'});
+          inactiveSection.find('.com-check-icon').remove();
         }
 
         function resetSections() {
           $comSection.css({'border-color': '#e2e8f0', 'background': 'transparent', 'opacity': '1'});
           $otherSection.css({'border-color': '#e2e8f0', 'background': 'transparent', 'opacity': '1'});
+          $comSection.find('.com-check-icon').remove();
+          $otherSection.find('.com-check-icon').remove();
         }
 
         d.$wrapper.find('.other-dropdown-item').on('click', function() {
