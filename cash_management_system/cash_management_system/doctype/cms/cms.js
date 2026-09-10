@@ -1128,14 +1128,11 @@ frappe.ui.form.on("CMS", {
         function highlightSection(activeSection, inactiveSection) {
           activeSection.css({'border-color': '#22c55e', 'background': '#f0fdf4', 'opacity': '1'});
           inactiveSection.css({'border-color': '#e2e8f0', 'background': '#f9fafb', 'opacity': '0.45'});
-          inactiveSection.find('input, label').css({'pointer-events': 'none'});
         }
 
         function resetSections() {
           $comSection.css({'border-color': '#e2e8f0', 'background': 'transparent', 'opacity': '1'});
-          $comSection.find('input, label').css({'pointer-events': 'auto'});
           $otherSection.css({'border-color': '#e2e8f0', 'background': 'transparent', 'opacity': '1'});
-          $otherSection.find('input, label').css({'pointer-events': 'auto'});
         }
 
         d.$wrapper.find('.other-dropdown-item').on('click', function() {
