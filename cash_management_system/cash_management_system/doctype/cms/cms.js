@@ -1024,14 +1024,20 @@ frappe.ui.form.on("CMS", {
         }
 
         if (otherList.length) {
-          fullHtml += `<div style="margin-bottom:16px;">
+          fullHtml += `<div style="margin-bottom:16px;position:relative;">
             <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:#6c757d;margin-bottom:8px;">Other COM Employees</div>
-            <select id="other_com_select" style="width:100%;padding:10px 12px;border:1px solid #e2e8f0;border-radius:8px;font-size:13px;color:#1e293b;background:#fff;appearance:auto;">
-              <option value="">Select Employee</option>`;
+            <div id="other_com_wrapper" style="position:relative;">
+              <input type="text" id="other_com_search" placeholder="Search by name or ID..." autocomplete="off" style="width:100%;padding:10px 12px;border:1px solid #e2e8f0;border-radius:8px;font-size:13px;color:#1e293b;box-sizing:border-box;background:#fff;">
+              <div id="other_com_dropdown" style="display:none;position:absolute;top:100%;left:0;right:0;max-height:200px;overflow-y:auto;border:1px solid #e2e8f0;border-radius:0 0 8px 8px;background:#fff;z-index:1000;box-shadow:0 4px 12px rgba(0,0,0,0.1);">`;
           otherList.forEach((e) => {
-            fullHtml += `<option value="${e.name}">${e.employee_name} (${e.user_id})</option>`;
+            fullHtml += `<div class="other-dropdown-item" data-name="${e.name}" data-userid="${e.user_id}" data-search="${(e.employee_name + ' ' + e.user_id).toLowerCase()}" style="display:flex;align-items:center;padding:10px 14px;cursor:pointer;border-bottom:1px solid #f1f5f9;transition:background 0.15s;" onmouseover="this.style.background='#eef2ff'" onmouseout="this.style.background='#fff'">
+              <div>
+                <div style="font-size:13px;font-weight:600;color:#1e293b;">${e.employee_name}</div>
+                <div style="font-size:11px;color:#64748b;margin-top:1px;">${e.user_id}</div>
+              </div>
+            </div>`;
           });
-          fullHtml += '</select></div>';
+          fullHtml += '</div></div></div>';
         }
 
         fullHtml += `<div>
@@ -1059,7 +1065,7 @@ frappe.ui.form.on("CMS", {
             if (radioEl.length) {
               empName = radioEl.val();
             } else {
-              empName = d.$wrapper.find('#other_com_select').val();
+              empName = d.$wrapper.find('#other_com_search').attr('data-selected-name');
             }
 
             if (!empName) {
@@ -1097,6 +1103,37 @@ frappe.ui.form.on("CMS", {
         });
 
         d.show();
+
+        let $search = d.$wrapper.find('#other_com_search');
+        let $dropdown = d.$wrapper.find('#other_com_dropdown');
+
+        $search.on('focus', function() {
+          $dropdown.show();
+        });
+
+        $search.on('input', function() {
+          let query = $(this).val().toLowerCase();
+          $dropdown.find('.other-dropdown-item').each(function() {
+            let search = $(this).data('search') || '';
+            $(this).toggle(search.indexOf(query) > -1);
+          });
+          $dropdown.show();
+        });
+
+        d.$wrapper.find('.other-dropdown-item').on('click', function() {
+          let name = $(this).data('name');
+          let empName = $(this).find('div > div:first').text();
+          let userId = $(this).data('userid');
+          $search.val(empName + ' (' + userId + ')');
+          $search.attr('data-selected-name', name);
+          $dropdown.hide();
+        });
+
+        $(document).on('click', function(e) {
+          if (!d.$wrapper.find('#other_com_wrapper').is(e.target) && d.$wrapper.find('#other_com_wrapper').has(e.target).length === 0) {
+            $dropdown.hide();
+          }
+        });
       });
     });
 
