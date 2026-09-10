@@ -993,6 +993,10 @@ frappe.ui.form.on("CMS", {
         let comList = comBySol.message || [];
         let otherList = allCom.message || [];
 
+        let empUserMap = {};
+        comList.forEach(e => { empUserMap[e.name] = e.user_id; });
+        otherList.forEach(e => { empUserMap[e.name] = e.user_id; });
+
         let fields = [];
 
         if (comList.length) {
@@ -1038,34 +1042,32 @@ frappe.ui.form.on("CMS", {
               return;
             }
 
-            frappe.db.get_value("Employee", empName, "user_id").then((r) => {
-              let userId = r.message;
-              if (!userId) {
-                frappe.msgprint("Selected employee has no user_id.");
-                return;
-              }
+            let userId = empUserMap[empName];
+            if (!userId) {
+              frappe.msgprint("Selected employee has no user_id.");
+              return;
+            }
 
-              d.hide();
+            d.hide();
 
-              frm.set_value("stage_1_emp_user", userId);
-              frm.set_value("stage_1_emp_status", "Pending");
-              frm.set_value("status", "COM Pending");
+            frm.set_value("stage_1_emp_user", userId);
+            frm.set_value("stage_1_emp_status", "Pending");
+            frm.set_value("status", "COM Pending");
 
-              frm
-                .save()
-                .then(() => {
-                  frappe.show_alert(
-                    {
-                      message: "Form submitted successfully",
-                      indicator: "green",
-                    },
-                    8,
-                  );
-                })
-                .catch(() => {
-                  frappe.msgprint("Please fix validation errors.");
-                });
-            });
+            frm
+              .save()
+              .then(() => {
+                frappe.show_alert(
+                  {
+                    message: "Form submitted successfully",
+                    indicator: "green",
+                  },
+                  8,
+                );
+              })
+              .catch(() => {
+                frappe.msgprint("Please fix validation errors.");
+              });
           },
         });
 
