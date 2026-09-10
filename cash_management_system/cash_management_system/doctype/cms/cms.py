@@ -73,7 +73,8 @@ class CMS(Document):
         self.set_com_email()
                    
     def set_com_email(self):
-        self.stage_1_emp_user = self.get_com(self.branch)  
+        if not self.stage_1_emp_user:
+            self.stage_1_emp_user = self.get_com(self.branch)  
         
         if self.stage_1_emp_user:
             # Fetch the employee's email using the User ID (stage_1_emp_user)
@@ -1041,16 +1042,16 @@ def get_com_by_sol_id(sol_id):
     employees = frappe.get_all(
         "Employee",
         filters={"sol_id": sol_id, "designation": ["like", "%CLUSTER OPERATION MANAGER%"]},
-        pluck="name"
+        fields=["name", "user_id"]
     )
-    return employees
+    return [{"label": e.name, "value": e.user_id} for e in employees if e.user_id]
 
 @frappe.whitelist()
 def get_all_com_employees():
     employees = frappe.get_all(
         "Employee",
         filters={"designation": ["like", "%CLUSTER OPERATION MANAGER%"]},
-        pluck="name"
+        fields=["name", "user_id"]
     )
-    return employees
+    return [{"label": e.name, "value": e.user_id} for e in employees if e.user_id]
     

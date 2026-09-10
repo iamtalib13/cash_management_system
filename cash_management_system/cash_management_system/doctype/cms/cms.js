@@ -979,18 +979,62 @@ frappe.ui.form.on("CMS", {
         return;
       }
 
-      frappe.confirm("Are you sure you want to submit?", function () {
-        // 🔹 fetch COM approver first
-        frappe.db
-          .get_value("CMS User", { com_approver: 1 }, "user")
-          .then((r) => {
-            if (!r.message) {
-              frappe.msgprint("COM Approver not configured");
+      let sol_id = frm.doc.sol_id;
+
+      Promise.all([
+        sol_id ? frappe.call({
+          method: "cash_management_system.cash_management_system.doctype.cms.cms.get_com_by_sol_id",
+          args: { sol_id: sol_id }
+        }) : Promise.resolve({ message: [] }),
+        frappe.call({
+          method: "cash_management_system.cash_management_system.doctype.cms.cms.get_all_com_employees"
+        })
+      ]).then(([comBySol, allCom]) => {
+        let comList = comBySol.message || [];
+        let otherList = allCom.message || [];
+
+        let fields = [];
+
+        if (comList.length) {
+          let options = comList.map(e => e.value + ":" + e.label).join("\n");
+          fields.push({
+            label: __("COM Employees (by sol_id)"),
+            fieldname: "com_by_sol",
+            fieldtype: "Select",
+            options: options,
+          });
+        }
+
+        if (otherList.length) {
+          let options = otherList.map(e => e.value + ":" + e.label).join("\n");
+          fields.push({
+            label: __("Other COM Employees"),
+            fieldname: "other_com",
+            fieldtype: "Select",
+            options: options,
+          });
+        }
+
+        fields.push({
+          label: __("Remarks"),
+          fieldname: "remarks",
+          fieldtype: "Small Text",
+        });
+
+        let d = new frappe.ui.Dialog({
+          title: __("Select COM Approver"),
+          fields: fields,
+          primary_action_label: __("Submit"),
+          primary_action: function () {
+            let selected = d.get_value("com_by_sol") || d.get_value("other_com");
+            if (!selected) {
+              frappe.msgprint("Please select a COM employee.");
               return;
             }
 
-            // ✅ set workflow fields BEFORE saving, so save never fails with "No changes in document"
-            frm.set_value("stage_1_emp_user", r.message.user);
+            d.hide();
+
+            frm.set_value("stage_1_emp_user", selected);
             frm.set_value("stage_1_emp_status", "Pending");
             frm.set_value("status", "COM Pending");
 
@@ -1008,7 +1052,10 @@ frappe.ui.form.on("CMS", {
               .catch(() => {
                 frappe.msgprint("Please fix validation errors.");
               });
-          });
+          },
+        });
+
+        d.show();
       });
     });
 
@@ -1417,23 +1464,6 @@ frappe.ui.form.on("CMS", {
               }
             });
           }
-
-          if (employeeData.sol_id) {
-            frappe.call({
-              method: "cash_management_system.cash_management_system.doctype.cms.cms.get_com_by_sol_id",
-              args: { sol_id: employeeData.sol_id },
-              callback: function(r) {
-                console.log("COM Employees by sol_id:", r.message);
-              }
-            });
-          }
-
-          frappe.call({
-            method: "cash_management_system.cash_management_system.doctype.cms.cms.get_all_com_employees",
-            callback: function(r) {
-              console.log("Other COM Employees:", r.message);
-            }
-          });
 
           // Safeguard against potential HTML injection
           const escapeHtml = (unsafe) => {
