@@ -1104,6 +1104,14 @@ frappe.ui.form.on("CMS", {
 
         $search.on('focus', function() {
           $dropdown.show();
+          $otherSection.css({'opacity': '1'});
+        });
+
+        $search.on('blur', function() {
+          if (!$dropdown.is(':visible') || !$dropdown.find('.other-dropdown-item:hover').length) {
+            $dropdown.hide();
+            $otherSection.css({'opacity': '0.45'});
+          }
         });
 
         $search.on('input', function() {
@@ -1113,6 +1121,7 @@ frappe.ui.form.on("CMS", {
             $(this).toggle(search.indexOf(query) > -1);
           });
           $dropdown.show();
+          $otherSection.css({'opacity': '1'});
         });
 
         let $comSection = d.$wrapper.find('#com_section');
