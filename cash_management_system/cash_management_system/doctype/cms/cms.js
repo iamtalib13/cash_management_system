@@ -1000,7 +1000,7 @@ frappe.ui.form.on("CMS", {
         let selectedComEmp = null;
 
         let fullHtml = `
-        <div style="font-family:'Inter',sans-serif;padding:12px;border-radius:8px;">`;
+        <div style="font-family:'Inter',sans-serif;border-radius:8px;">`;
 
         if (comList.length) {
           fullHtml += `<div id="com_section" style="margin-bottom:16px;padding:10px;border:2px solid #e2e8f0;border-radius:8px;transition:border-color 0.2s,background 0.2s;position:relative;">
