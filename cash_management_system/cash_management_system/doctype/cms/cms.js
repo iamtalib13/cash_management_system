@@ -996,22 +996,28 @@ frappe.ui.form.on("CMS", {
         let fields = [];
 
         if (comList.length) {
-          let options = comList.map(e => e.user_id + ":" + e.name + " (" + e.user_id + ")").join("\n");
+          let com_ids = comList.map(e => e.name);
           fields.push({
             label: __("COM Employees (by sol_id)"),
             fieldname: "com_by_sol",
-            fieldtype: "Select",
-            options: options,
+            fieldtype: "Link",
+            options: "Employee",
+            get_query: function() {
+              return { filters: { name: ["in", com_ids] } };
+            },
           });
         }
 
         if (otherList.length) {
-          let options = otherList.map(e => e.user_id + ":" + e.name + " (" + e.user_id + ")").join("\n");
+          let other_ids = otherList.map(e => e.name);
           fields.push({
             label: __("Other COM Employees"),
             fieldname: "other_com",
-            fieldtype: "Select",
-            options: options,
+            fieldtype: "Link",
+            options: "Employee",
+            get_query: function() {
+              return { filters: { name: ["in", other_ids] } };
+            },
           });
         }
 
@@ -1026,32 +1032,40 @@ frappe.ui.form.on("CMS", {
           fields: fields,
           primary_action_label: __("Submit"),
           primary_action: function () {
-            let selected = d.get_value("com_by_sol") || d.get_value("other_com");
-            if (!selected) {
+            let empName = d.get_value("com_by_sol") || d.get_value("other_com");
+            if (!empName) {
               frappe.msgprint("Please select a COM employee.");
               return;
             }
 
-            d.hide();
+            frappe.db.get_value("Employee", empName, "user_id").then((r) => {
+              let userId = r.message;
+              if (!userId) {
+                frappe.msgprint("Selected employee has no user_id.");
+                return;
+              }
 
-            frm.set_value("stage_1_emp_user", selected);
-            frm.set_value("stage_1_emp_status", "Pending");
-            frm.set_value("status", "COM Pending");
+              d.hide();
 
-            frm
-              .save()
-              .then(() => {
-                frappe.show_alert(
-                  {
-                    message: "Form submitted successfully",
-                    indicator: "green",
-                  },
-                  8,
-                );
-              })
-              .catch(() => {
-                frappe.msgprint("Please fix validation errors.");
-              });
+              frm.set_value("stage_1_emp_user", userId);
+              frm.set_value("stage_1_emp_status", "Pending");
+              frm.set_value("status", "COM Pending");
+
+              frm
+                .save()
+                .then(() => {
+                  frappe.show_alert(
+                    {
+                      message: "Form submitted successfully",
+                      indicator: "green",
+                    },
+                    8,
+                  );
+                })
+                .catch(() => {
+                  frappe.msgprint("Please fix validation errors.");
+                });
+            });
           },
         });
 
