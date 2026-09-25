@@ -19,6 +19,8 @@ def get_columns():
         {"label": "Transaction Category", "fieldname": "transaction_category", "fieldtype": "Select", "width": 130},
         {"label": "Requested Branch", "fieldname": "select_branch", "fieldtype": "Data", "width": 130},
         {"label": "Branch", "fieldname": "branch", "fieldtype": "Link", "options": "Branch", "width": 140},
+        {"label": "Zone", "fieldname": "zone", "fieldtype": "Link", "options": "Zone", "width": 110},
+        {"label": "Region", "fieldname": "region", "fieldtype": "Link", "options": "Region", "width": 110},
         {"label": "Branch Name", "fieldname": "requested_branch", "fieldtype": "Link", "options": "Branch", "width": 140},
         {"label": "Transaction Type", "fieldname": "transaction_type", "fieldtype": "Select", "width": 130},
         {"label": "Date of Request", "fieldname": "date_of_request", "fieldtype": "Date", "width": 120},
@@ -91,7 +93,7 @@ def get_data(filters):
     values = {}
 
     # Date filter (mandatory)
-    conditions.append("date_of_request BETWEEN %(from_date)s AND %(to_date)s")
+    conditions.append("`tabCMS`.`date_of_request` BETWEEN %(from_date)s AND %(to_date)s")
     values.update({
         "from_date": filters.get("from_date"),
         "to_date": filters.get("to_date")
@@ -99,31 +101,35 @@ def get_data(filters):
 
     # Optional filters
     if filters.get("branch"):
-        conditions.append("branch = %(branch)s")
-        values["branch"] = filters.branch
+        conditions.append("`tabCMS`.`branch` = %(branch)s")
+        values["branch"] = filters.get("branch")
 
     if filters.get("transaction_category"):
-        conditions.append("transaction_category = %(transaction_category)s")
-        values["transaction_category"] = filters.transaction_category
+        conditions.append("`tabCMS`.`transaction_category` = %(transaction_category)s")
+        values["transaction_category"] = filters.get("transaction_category")
 
     if filters.get("transaction_type"):
-        conditions.append("transaction_type = %(transaction_type)s")
-        values["transaction_type"] = filters.transaction_type
+        conditions.append("`tabCMS`.`transaction_type` = %(transaction_type)s")
+        values["transaction_type"] = filters.get("transaction_type")
 
     if filters.get("status"):
-        conditions.append("status = %(status)s")
-        values["status"] = filters.status
+        conditions.append("`tabCMS`.`status` = %(status)s")
+        values["status"] = filters.get("status")
 
     condition_str = " AND ".join(conditions)
 
-    fields = ",\n            ".join(REPORT_FIELDS)
+    cms_fields = ",\n            ".join(f"`tabCMS`.`{fieldname}`" for fieldname in REPORT_FIELDS)
 
     query = f"""
         SELECT
-            {fields}
+            {cms_fields},
+            `tabEmployee`.`custom_zone` AS zone,
+            `tabEmployee`.`custom_region` AS region
         FROM `tabCMS`
+        LEFT JOIN `tabEmployee`
+            ON `tabEmployee`.`user_id` = `tabCMS`.`owner`
         WHERE {condition_str}
-        ORDER BY modified DESC
+        ORDER BY `tabCMS`.`modified` DESC
     """
 
     return frappe.db.sql(query, values, as_dict=True)
