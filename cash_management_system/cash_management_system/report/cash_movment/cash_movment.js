@@ -2,6 +2,16 @@
 // For license information, please see license.txt
 
 frappe.query_reports["Cash Movment"] = {
+  onload: function (report) {
+    report.page.add_inner_button(
+      __("Download"),
+      function () {
+        report.export_report();
+      },
+      null,
+      "primary"
+    );
+  },
   filters: [
     {
       fieldname: "from_date",
