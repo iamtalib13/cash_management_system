@@ -28,24 +28,6 @@ frappe.query_reports["Cash Movment"] = {
       default: frappe.datetime.month_end(),
     },
     {
-      fieldname: "branch",
-      label: __("Branch"),
-      fieldtype: "Link",
-      options: "Branch",
-    },
-    {
-      fieldname: "zone",
-      label: __("Zone"),
-      fieldtype: "Link",
-      options: "Zone",
-    },
-    {
-      fieldname: "region",
-      label: __("Region"),
-      fieldtype: "Link",
-      options: "Region",
-    },
-    {
       fieldname: "transaction_category",
       label: __("Transaction Category"),
       fieldtype: "Select",
@@ -62,6 +44,24 @@ frappe.query_reports["Cash Movment"] = {
       label: __("Status"),
       fieldtype: "Select",
       options: "\nDraft\nCOM Pending\nHO Pending\nApproved\nRejected\nCompleted",
+    },
+    {
+      fieldname: "branch",
+      label: __("Branch"),
+      fieldtype: "Link",
+      options: "Branch",
+    },
+    {
+      fieldname: "zone",
+      label: __("Zone"),
+      fieldtype: "Link",
+      options: "Zone",
+    },
+    {
+      fieldname: "region",
+      label: __("Region"),
+      fieldtype: "Link",
+      options: "Region",
     },
   ],
 };
