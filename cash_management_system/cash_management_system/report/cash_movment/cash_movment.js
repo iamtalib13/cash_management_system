@@ -34,6 +34,18 @@ frappe.query_reports["Cash Movment"] = {
       options: "Branch",
     },
     {
+      fieldname: "zone",
+      label: __("Zone"),
+      fieldtype: "Link",
+      options: "Zone",
+    },
+    {
+      fieldname: "region",
+      label: __("Region"),
+      fieldtype: "Link",
+      options: "Region",
+    },
+    {
       fieldname: "transaction_category",
       label: __("Transaction Category"),
       fieldtype: "Select",

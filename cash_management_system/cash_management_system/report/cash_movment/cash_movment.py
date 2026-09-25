@@ -104,6 +104,14 @@ def get_data(filters):
         conditions.append("`tabCMS`.`branch` = %(branch)s")
         values["branch"] = filters.get("branch")
 
+    if filters.get("zone"):
+        conditions.append("`tabEmployee`.`custom_zone` = %(zone)s")
+        values["zone"] = filters.get("zone")
+
+    if filters.get("region"):
+        conditions.append("`tabEmployee`.`custom_region` = %(region)s")
+        values["region"] = filters.get("region")
+
     if filters.get("transaction_category"):
         conditions.append("`tabCMS`.`transaction_category` = %(transaction_category)s")
         values["transaction_category"] = filters.get("transaction_category")
