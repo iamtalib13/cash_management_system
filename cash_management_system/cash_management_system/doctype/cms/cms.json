@@ -381,7 +381,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-06-17 12:42:28.766756",
+ "modified": "2026-09-25 11:35:00.000000",
  "modified_by": "Administrator",
  "module": "Cash Management System",
  "name": "CMS",
@@ -399,6 +399,18 @@
    "role": "System Manager",
    "share": 1,
    "write": 1
+  },
+  {
+   "export": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Operations Support Manager"
+  },
+  {
+   "export": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Employee"
   }
  ],
  "row_format": "Dynamic",
