@@ -16,55 +16,59 @@ frappe.listview_settings["CMS"] = {
   onload(listview) {
     const user = frappe.session.user;
 
-    // ✅ Bypass for Administrator and HO-Approver
-    if (
-      user === "Administrator" ||
-      user === "813@sahayog.com" ||
-      user === "333@sahayog.com" ||
-      user === "2800@sahayog.com"
-    ) {
+    // ✅ Bypass for Administrator
+    if (user === "Administrator") {
       return;
     }
 
-    frappe.db
-      .get_value("Employee", { user_id: user }, "designation")
-      .then((r) => {
-        if (!r.message) {
-          listview.$page.empty().html(`
-            <div style="padding:40px;text-align:center;color:#888;">
-              You are not authorized to view this page.
-            </div>
-          `);
-          return;
-        }
+    Promise.all([
+      frappe.call({
+        method:
+          "cash_management_system.cash_management_system.doctype.cms.cms.is_ho_approver",
+      }),
+      frappe.db.get_value("Employee", { user_id: user }, "designation"),
+    ]).then(([hoRes, r]) => {
+      // ✅ Bypass for HO-Approver (CMS User doctype, ho_approver checked)
+      if (hoRes.message) {
+        return;
+      }
 
-        // Normalize designation (UPPERCASE + trim)
-        const designation = (r.message.designation || "").trim().toUpperCase();
+      if (!r.message) {
+        listview.$page.empty().html(`
+          <div style="padding:40px;text-align:center;color:#888;">
+            You are not authorized to view this page.
+          </div>
+        `);
+        return;
+      }
 
-        const allowed = [
-          "BRANCH MANAGER",
-          "BRANCH OPERATION MANAGER",
-          "BRANCH OFFICER",
-          "REGIONAL OPERATION MANAGER",
-          "CUSTOMER SERVICE OFFICER",
-          "CUSTOMER SERVICE MANAGER",
-          "CLUSTER OPERATION MANAGER",
-          "ASST. ZONAL MANAGER",
-          "ZONAL MANAGER",
-          "SR. CLUSTER OPERATION MANAGER",
-          "SR.CLUSTER OPERATION MANAGER",
-          "SR. ZONAL MANAGER",
-          "ASST. BRANCH MANAGER",
-        ];
+      // Normalize designation (UPPERCASE + trim)
+      const designation = (r.message.designation || "").trim().toUpperCase();
 
-        // ❌ Not allowed → blank page
-        if (!allowed.some((d) => designation.includes(d))) {
-          listview.$page.empty().html(`
-            <div style="padding:40px;text-align:center;color:#888;">
-              You are not authorized to view this page.
-            </div>
-          `);
-        }
-      });
+      const allowed = [
+        "BRANCH MANAGER",
+        "BRANCH OPERATION MANAGER",
+        "BRANCH OFFICER",
+        "REGIONAL OPERATION MANAGER",
+        "CUSTOMER SERVICE OFFICER",
+        "CUSTOMER SERVICE MANAGER",
+        "CLUSTER OPERATION MANAGER",
+        "ASST. ZONAL MANAGER",
+        "ZONAL MANAGER",
+        "SR. CLUSTER OPERATION MANAGER",
+        "SR.CLUSTER OPERATION MANAGER",
+        "SR. ZONAL MANAGER",
+        "ASST. BRANCH MANAGER",
+      ];
+
+      // ❌ Not allowed → blank page
+      if (!allowed.some((d) => designation.includes(d))) {
+        listview.$page.empty().html(`
+          <div style="padding:40px;text-align:center;color:#888;">
+            You are not authorized to view this page.
+          </div>
+        `);
+      }
+    });
   },
 };
