@@ -4,7 +4,9 @@ def cms_permission_query(user):
     # -------------------------------------------------
     # 1. Administrator & HO Approver → full access
     # -------------------------------------------------
-    ho_approver_ids = ["813@sahayog.com", "333@sahayog.com", "2800@sahayog.com"]
+    ho_approver_ids = frappe.get_all(
+        "CMS User", filters={"ho_approver": 1}, pluck="user"
+    )
     if user in ["Administrator"] + ho_approver_ids:
         return ""
 
