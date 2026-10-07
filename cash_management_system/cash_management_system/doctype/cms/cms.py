@@ -287,10 +287,14 @@ def send_status_email(doc, action, remark=None):
             recipients.add(branch_email.strip().lower())
 
     # --------------------------------------------------
-    # 3. HO APPROVER LOGIC (User 813)
+    # 3. HO APPROVER LOGIC (from CMS User doctype)
     # --------------------------------------------------
-    ho_user_ids = ["813@sahayog.com", "333@sahayog.com","2800@sahayog.com"]
+    ho_user_ids = frappe.get_all(
+        "CMS User", filters={"ho_approver": 1}, pluck="user"
+    )
     for ho_user in ho_user_ids:
+        if not ho_user:
+            continue
         ho_company_email = frappe.db.get_value("Employee", {"user_id": ho_user}, "company_email")
         if ho_company_email:
             recipients.add(ho_company_email.strip().lower())
@@ -461,7 +465,7 @@ def get_pending_cms_requests():
 
     # Resolve COM & HO users
     com_user = frappe.db.get_value("CMS User", {"status": "COM-Approver"}, "name")
-    ho_user = frappe.db.get_value("CMS User", {"status": "HO-Approver"}, "name")
+    ho_user = frappe.db.get_value("CMS User", {"ho_approver": 1}, "name")
 
     com_email = frappe.db.get_value(
         "Employee", {"user_id": com_user}, "company_email"
@@ -1054,4 +1058,14 @@ def get_all_com_employees():
         fields=["name", "employee_name", "user_id", "custom_district"]
     )
     return [{"name": e.name, "employee_name": e.employee_name, "user_id": e.user_id, "district": e.custom_district} for e in employees if e.user_id]
-    
+
+@frappe.whitelist()
+def is_ho_approver():
+    user = frappe.session.user
+    if user == "Administrator":
+        return True
+    return bool(
+        frappe.db.get_value(
+            "CMS User", {"user": user, "ho_approver": 1}, "name"
+        )
+    )
