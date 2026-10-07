@@ -14,23 +14,30 @@ frappe.ui.form.on("CMS", {
     });
     frm.trigger("custodian_1_filter");
     frm.trigger("custodian_2_filter");
-    frappe.call({
-      method: "frappe.client.get_value",
-      args: {
-        doctype: "Employee",
-        filters: { user_id: frappe.session.user },
-        fieldname: ["designation"],
-      },
-      callback: function (r) {
-        frm._user_designation = (r.message?.designation || "")
-          .toUpperCase()
-          .trim();
-        console.log("User Designation:", frm._user_designation);
+    Promise.all([
+      frappe.call({
+        method: "frappe.client.get_value",
+        args: {
+          doctype: "Employee",
+          filters: { user_id: frappe.session.user },
+          fieldname: ["designation"],
+        },
+      }),
+      frappe.call({
+        method:
+          "cash_management_system.cash_management_system.doctype.cms.cms.is_ho_approver",
+      }),
+    ]).then(([r, hoRes]) => {
+      frm._user_designation = (r.message?.designation || "")
+        .toUpperCase()
+        .trim();
+      frm._is_ho_approver = !!hoRes.message;
+      console.log("User Designation:", frm._user_designation);
+      console.log("HO Approver:", frm._is_ho_approver);
 
-        // ✅ run access check and role validation ONLY after designation is available
-        apply_page_access_control(frm);
-        frm.trigger("role_validation");
-      },
+      // ✅ run access check and role validation ONLY after designation is available
+      apply_page_access_control(frm);
+      frm.trigger("role_validation");
     });
     frm.set_query("bank_name", "cheque_details", function (doc, cdt, cdn) {
       return {
@@ -337,13 +344,8 @@ frappe.ui.form.on("CMS", {
         role = "COM-Approver";
       }
     }
-    // 3. Hardcoded HO Approver by User ID OR if explicitly assigned
-    else if (
-      user === "813@sahayog.com" ||
-      user === "333@sahayog.com" ||
-      user === "2800@sahayog.com" ||
-      frm.doc.stage_2_emp_user === user
-    ) {
+    // 3. HO Approver via CMS User doctype (ho_approver checked) OR if explicitly assigned
+    else if (frm._is_ho_approver || frm.doc.stage_2_emp_user === user) {
       role = "HO-Approver";
     }
 
@@ -2172,9 +2174,7 @@ function apply_page_access_control(frm) {
     isBranchManager ||
     isSpecialDesignation ||
     frappe.session.user === "Administrator" ||
-    frappe.session.user === "813@sahayog.com" ||
-    frappe.session.user === "333@sahayog.com" ||
-    frappe.session.user === "2800@sahayog.com"
+    frm._is_ho_approver
   ) {
     console.log("Access allowed");
     return;
